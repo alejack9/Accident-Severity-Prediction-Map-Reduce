@@ -23,10 +23,10 @@ object Main {
     val bufferedSource = Source.fromFile(filename)
     val dataset = ArrayBuffer[Array[String]]()
 
-    for(line <- bufferedSource.getLines.drop(1).take(150)) {
+    for(line <- bufferedSource.getLines.drop(1).take(500000)) {
       dataset += line.split(",").map(_.trim)
     }
 
-    print(dataset(0)(4))
+    print(dataset)
   }
 }
