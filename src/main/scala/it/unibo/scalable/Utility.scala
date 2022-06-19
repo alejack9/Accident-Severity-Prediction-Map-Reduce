@@ -36,7 +36,7 @@ object Utility {
     ArrayBuffer(left, right)
   }
 
-  def get_best_split(dataset: ArrayBuffer[Array[Float]], targetIndex: Int): Map[String, Any] = {
+  def get_best_split(dataset: ArrayBuffer[Array[Float]], targetIndex: Int): ArrayBuffer[Any] = {
     val classes = Array[Float]()
     var bestIndex = 0
     var bestScore = 999.0
@@ -57,6 +57,6 @@ object Utility {
       }
     }
 
-    Map("index" -> bestIndex, "value" -> bestValue, "subsets" -> bestSubsets)
+    ArrayBuffer(bestIndex, bestValue, bestSubsets)
   }
 }
