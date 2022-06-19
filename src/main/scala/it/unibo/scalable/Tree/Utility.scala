@@ -1,17 +1,17 @@
 package it.unibo.scalable.Tree
 
 object Utility {
-  def getDominantTarget(data: Array[(Array[Any], String)]): String ={
+  def getDominantTarget[T](data: Array[(Array[T], T)]): T ={
     throw new NotImplementedError()
   }
-  def isPure(data: Array[(Array[Any], String)]): Boolean ={
+  def isPure[T](data: Array[(Array[T], T)]): Boolean ={
     throw new NotImplementedError()
   }
-  def getBestAttribute(data: Array[(Array[Any], String)]): (Any => Boolean, Float) ={
+  def getBestSplitting[T](data: Array[(Array[T], T)], metric:Array[(Array[T], T)] => Float) : (Array[T] => Boolean, T) ={
     throw new NotImplementedError()
   }
 
-  def splitData(cond: Any => Boolean, data: Array[(Array[Any], String)]): (Array[(Array[Any], String)], Array[(Array[Any], String)]) ={
+  def splitData[T](data: Array[(Array[T], T)], cond: T => Boolean): (Array[(Array[T], T)], Array[(Array[T], T)]) ={
     throw new NotImplementedError()
   }
 

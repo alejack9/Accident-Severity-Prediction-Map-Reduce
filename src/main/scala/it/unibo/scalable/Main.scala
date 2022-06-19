@@ -41,8 +41,10 @@ object Main {
       Format.Ordered,Format.Ordered,Format.Unordered)
 
     val DT = new ParDecisionTree[Float]()
-    def placeholderMetric= (el:Array[Float]) => 0.1f
-    val placeholderDepth = 90
-    DT.build(data.toArray, features.zip(featFormats), placeholderMetric, placeholderDepth )
+    def placeholderMetric= (el:Array[(Float, Float)]) => 0.1f
+    val placeholderDepth = 5
+    DT.build(data.toArray, features.zip(featFormats), placeholderMetric, placeholderDepth)
+
+    println(DT.root)
   }
 }
