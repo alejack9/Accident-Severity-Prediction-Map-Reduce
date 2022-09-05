@@ -1,6 +1,6 @@
 package it.unibo.scalable.ml.dt.sequential
 
-import it.unibo.scalable.ml.dt.{CondNode, Condition, Leaf, Tree}
+import it.unibo.scalable.ml.dt._
 import org.scalatest.funsuite.AnyFunSuite
 
 class C45Test extends AnyFunSuite {
@@ -14,47 +14,84 @@ class C45Test extends AnyFunSuite {
 
   val dtc = new C45
 
-  test("a_0, continuous") {
-//    println("________Dataset_______")
-//    println("| a_0  a_1  a_2    c |")
-//    println("|--------------------|")
-//    D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
-//    println("----------------------")
+  private def printDs(): Unit = {
+        println("________Dataset_______")
+        println("| a_0  a_1  a_2    c |")
+        println("|--------------------|")
+        D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
+        println("----------------------")
+  }
+
+  test("a_0 | continuous") {
     val t = dtc.run(D.map(sample => List(sample.head, sample.last)), List(Format.Continuous))
-//    t.show
-    assert(t == CondNode(new Condition(_ => 0, "feat 0 < 5.0"), List(CondNode(new Condition(_ => 0, "feat 0 < 2.0"), List(Leaf(2.0), Leaf(0.0))), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(ContinuousCondition(0, 5.0f), List(CondNode(ContinuousCondition(0, 2.0f), List(Leaf(2.0), Leaf(0.0))), Leaf(2.0))).asInstanceOf[Tree[Float]])
   }
 
-  test("a_0, categorical") {
-    //    println("________Dataset_______")
-    //    println("| a_0  a_1  a_2    c |")
-    //    println("|--------------------|")
-    //    D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
-    //    println("----------------------")
+  test("a_0 | categorical") {
     val t = dtc.run(D.map(sample => List(sample.head, sample.last)), List(Format.Categorical))
-    //    t.show
-    assert(t == CondNode(new Condition(_ => 0, "feat 0 List(3.0, 1.0, 7.0)"), List(Leaf(0.0), Leaf(2.0), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(Leaf(0.0), Leaf(2.0), Leaf(2.0))).asInstanceOf[Tree[Float]])
   }
 
-  test("a0 a1 continuous") {
-    println("________Dataset_______")
-    println("| a_0  a_1  a_2    c |")
-    println("|--------------------|")
-    D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
-    println("----------------------")
+  test("a0 a1 | continuous") {
     val t = dtc.run(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Continuous))
-    //    t.show
-//    assert(t == CondNode(new Condition(_ => 0, "feat 0 List(3.0, 1.0, 7.0)"), List(Leaf(0.0), Leaf(2.0), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert(t ==
+      CondNode(ContinuousCondition(0, 5.0),
+        List(CondNode(ContinuousCondition(0, 2.0),
+          List(CondNode(ContinuousCondition(1, 5.5),
+            List(CondNode(ContinuousCondition(1, 1.5), List(Leaf(0.0), Leaf(2.0))), Leaf(2.0))), Leaf(0.0))), Leaf(2.0) )).asInstanceOf[Tree[Float]])
   }
 
-  test("a0 a1 mixed") {
-    println("________Dataset_______")
-    println("| a_0  a_1  a_2    c |")
-    println("|--------------------|")
-    D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
-    println("----------------------")
+  test("a0 a1 | mixed") {
     val t = dtc.run(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Categorical))
-    //    t.show
-//    assert(t == CondNode(new Condition(_ => 0, "feat 0 List(3.0, 1.0, 7.0)"), List(Leaf(0.0), Leaf(2.0), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert (t == CondNode(ContinuousCondition(0, 5.0), List(
+        CondNode(ContinuousCondition(0, 2.0), List(
+          CondNode(CategoricalCondition(1, List(1.0, 2.0, 9.0)), List(
+            Leaf(0.0),Leaf(2.0),Leaf(2.0))),
+          Leaf(0.0))),
+        Leaf(2.0)
+      )).asInstanceOf[Tree[Float]])
+  }
+
+  test("all ds | continuous") {
+    val t = dtc.run(D, List(Format.Continuous, Format.Continuous, Format.Continuous))
+    assert(t == CondNode(ContinuousCondition(0, 5.0), List(
+      CondNode(ContinuousCondition(0, 2.0), List(
+        CondNode(ContinuousCondition(1, 5.5), List(
+          CondNode(ContinuousCondition(1, 1.5), List(
+            Leaf(0.0), Leaf(2.0)
+          )),
+          Leaf(2.0)
+        )),
+        Leaf(0.0)
+      )),
+      Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
+  }
+
+  test("all ds | categorical") {
+    val t = dtc.run(D, List(Format.Categorical, Format.Categorical, Format.Categorical))
+        assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
+          Leaf(0.0),
+          CondNode(CategoricalCondition(2, List(7.0, 11.0)), List(
+            Leaf(0.0), Leaf(2.0)
+          )),
+          Leaf(2.0)
+        )).asInstanceOf[Tree[Float]])
+  }
+
+  test("all ds | mixed") {
+    val t = dtc.run(D, List(Format.Categorical, Format.Continuous, Format.Categorical))
+    assert(t == CondNode(ContinuousCondition(1, 6.0), List(
+      CondNode(ContinuousCondition(1, 2.5), List(
+        CondNode(CategoricalCondition(0, List(1.0, 7.0)), List(
+          CondNode(ContinuousCondition(1, 1.5), List(
+            Leaf(0.0), Leaf(2.0)
+          )),
+          Leaf(2.0)
+        )),
+        Leaf(0.0)
+      )),
+      Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
   }
 }

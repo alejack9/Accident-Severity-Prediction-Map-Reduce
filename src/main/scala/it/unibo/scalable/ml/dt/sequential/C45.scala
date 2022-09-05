@@ -16,9 +16,9 @@ object Types {
 }
 
 object Utility {
-  def getMostFrequentTarget(ds: Dataset) = ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1
+  def getMostFrequentTarget(ds: Dataset): Float = ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1
+  // def getBranchesFromCondition(ds: Dataset, condition: Condition): Seq[Dataset] = ds.groupBy(sample => condition(sample)).values.toList
 }
-
 
 class C45 {
 
@@ -40,7 +40,7 @@ class C45 {
 
         if (attributes.head._1 == Format.Categorical) {
 
-          def cond: Condition = new Condition(sample => attrValues.indexOf(sample(attrIndex)), s"feat $attrIndex $attrValues")
+          def cond = CategoricalCondition(attrIndex, attrValues)
 
           return CondNode(cond, attrValues.map(v => _run(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1))))
         }
@@ -58,7 +58,7 @@ class C45 {
             (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
           }).maxBy(_._2)
 
-          def cond: Condition = new Condition(sample => if (sample(attrIndex) < bestSplitPoint._1) 0 else 1, s"feat $attrIndex < ${bestSplitPoint._1}")
+          def cond = ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat)
 
           return CondNode(cond, bestSplitPoint._3.map(_run(_, attributes)))
         }
@@ -67,14 +67,15 @@ class C45 {
       // + 1 attributes are available
       val dsEntropy = Calc.entropy(ds)
 
-      val infoGainRatios: Seq[(Float, Condition)] = attributes.map{case (format, attrIndex) =>
+      val infoGainRatios: Seq[(Float, Condition[_ <: Float], Seq[Dataset], Int)] = attributes.zipWithIndex.map{case ((format, attrIndex), index) =>
         val attrValues = ds.map(sample => sample(attrIndex)).distinct
-        if (attrValues.length == 1) (0.0f, new Condition(_ => -1))
+        if (attrValues.length == 1) (0.0f, CategoricalCondition(index, Nil), Nil, -1)
         else if (format == Format.Categorical) {
-          def cond: Condition = new Condition(sample => attrValues.indexOf(sample(attrIndex)), s"feat $attrIndex $attrValues")
+          def cond: Condition[Float] = CategoricalCondition(attrIndex, attrValues)
 
-          (Calc.infoGainRatio(dsEntropy, ds.groupBy(sample => sample(attrIndex)).values.toList, ds.length), cond)
-        } else {
+          val branches = ds.groupBy(sample => sample(attrIndex)).values.toList
+          (Calc.infoGainRatio(dsEntropy, branches, ds.length), cond, branches, index)
+        } else { // continuous case
           val midPoints = attrValues.sorted.init.zip(attrValues.sorted.tail).map { case (a, b) => (a + b) / 2.0 }
 
           val bestSplitPoint = midPoints.map(midpoint => {
@@ -83,19 +84,26 @@ class C45 {
             (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
           }).maxBy(_._2)
 
-          def cond: Condition = new Condition(sample => if (sample(attrIndex) < bestSplitPoint._1) 0 else 1, s"feat $attrIndex < ${bestSplitPoint._1}")
+          def cond: Condition[Float] = ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat)
 
-          (bestSplitPoint._2, cond)
+          (bestSplitPoint._2, cond, bestSplitPoint._3, index)
         }
       }
 
-      println(infoGainRatios)
+      if (infoGainRatios.forall(_._1 == 0.0f)) return Leaf(Utility.getMostFrequentTarget(ds))
 
-      // TODO: take best infoGainRatio and make a node with that
-      ???
+      val maxGainRatio = infoGainRatios.maxBy(_._1)
 
-
-      throw new NotImplementedError()
+      CondNode(
+        maxGainRatio._2,
+        maxGainRatio._3
+          .map(_run(
+            _,
+            if (attributes(maxGainRatio._4)._1 == Format.Continuous)
+              attributes
+            else
+              attributes.patch(maxGainRatio._4, Nil, 1)
+      )))
     }
 
     _run(ds, attributeTypes.zipWithIndex)
