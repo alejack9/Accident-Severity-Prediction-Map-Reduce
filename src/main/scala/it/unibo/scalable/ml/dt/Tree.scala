@@ -1,7 +1,7 @@
 package it.unibo.scalable.ml.dt
 
 sealed trait Tree[T] {
-  def show: Unit = {
+  def show(): Unit = {
     def _show(tree: Tree[T], depth: Int): Unit = tree match {
       case Leaf(target) => println(depth + ": " + target)
       case CondNode(cond, children) =>
@@ -25,6 +25,6 @@ sealed trait Tree[T] {
   }
 }
 
-case class CondNode[T](cond: Condition, children: Seq[Tree[T]]) extends Tree[T]
+case class CondNode[C, T](cond: Condition[C], children: Seq[Tree[T]]) extends Tree[T]
 
 case class Leaf[T](target: T) extends Tree[T]
