@@ -31,9 +31,16 @@ object Main {
       Format.Categorical,Format.Categorical,Format.Categorical,Format.Continuous,Format.Continuous,Format.Continuous,Format.Continuous,
       Format.Categorical)
 
-    val dt = new C45().run(x.toSeq, featFormats)
-    dt.show
+    val y = x.toSeq
+    val c45 = new C45
+    val t1 = System.nanoTime
+    val dt_time = c45.run(y, featFormats)
+    val t2 = System.nanoTime() - t1
 
+//    val dt = new C45().run(x.toSeq, featFormats)
+    dt_time.show
+
+    println(t2 / 1e9d)
 
 //
 //    val sc = ContextFactory.getContext()

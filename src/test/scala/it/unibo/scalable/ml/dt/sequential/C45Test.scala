@@ -96,5 +96,6 @@ class C45Test extends AnyFunSuite {
         Leaf(0.0))),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
+    println(t.toString)
   }
 }
