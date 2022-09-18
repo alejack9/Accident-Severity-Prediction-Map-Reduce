@@ -1,6 +1,5 @@
 package it.unibo.scalable.ml.dt.sequential
 
-import it.unibo.scalable.Calc
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.sequential.Format.Format
 import it.unibo.scalable.ml.dt.sequential.Types._
