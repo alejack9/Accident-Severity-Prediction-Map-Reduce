@@ -24,21 +24,31 @@ class C45Test extends AnyFunSuite {
 
   test("a_0 | continuous") {
     val t = dtc.run(D.map(sample => List(sample.head, sample.last)), List(Format.Continuous))
-    assert(t == CondNode(ContinuousCondition(0, 5.0f), List(CondNode(ContinuousCondition(0, 2.0f), List(Leaf(2.0), Leaf(0.0))), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(ContinuousCondition(0, 5.0f), List(
+      CondNode(ContinuousCondition(0, 2.0f), List(
+        Leaf(2.0), Leaf(0.0))),
+      Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
   }
 
   test("a_0 | categorical") {
     val t = dtc.run(D.map(sample => List(sample.head, sample.last)), List(Format.Categorical))
-    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(Leaf(0.0), Leaf(2.0), Leaf(2.0))).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
+      Leaf(0.0), Leaf(2.0), Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
   }
 
   test("a0 a1 | continuous") {
     val t = dtc.run(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Continuous))
-    assert(t ==
-      CondNode(ContinuousCondition(0, 5.0),
-        List(CondNode(ContinuousCondition(0, 2.0),
-          List(CondNode(ContinuousCondition(1, 5.5),
-            List(CondNode(ContinuousCondition(1, 1.5), List(Leaf(0.0), Leaf(2.0))), Leaf(2.0))), Leaf(0.0))), Leaf(2.0) )).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(ContinuousCondition(0, 5.0), List(
+      CondNode(ContinuousCondition(0, 2.0), List(
+        CondNode(ContinuousCondition(1, 5.5), List(
+          CondNode(ContinuousCondition(1, 1.5), List(
+            Leaf(0.0), Leaf(2.0))),
+          Leaf(2.0))),
+        Leaf(0.0))),
+      Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
   }
 
   test("a0 a1 | mixed") {
@@ -49,7 +59,7 @@ class C45Test extends AnyFunSuite {
             Leaf(0.0),Leaf(2.0),Leaf(2.0))),
           Leaf(0.0))),
         Leaf(2.0)
-      )).asInstanceOf[Tree[Float]])
+    )).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | continuous") {
@@ -58,25 +68,21 @@ class C45Test extends AnyFunSuite {
       CondNode(ContinuousCondition(0, 2.0), List(
         CondNode(ContinuousCondition(1, 5.5), List(
           CondNode(ContinuousCondition(1, 1.5), List(
-            Leaf(0.0), Leaf(2.0)
-          )),
-          Leaf(2.0)
-        )),
-        Leaf(0.0)
-      )),
+            Leaf(0.0), Leaf(2.0))),
+          Leaf(2.0))),
+        Leaf(0.0))),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | categorical") {
     val t = dtc.run(D, List(Format.Categorical, Format.Categorical, Format.Categorical))
-        assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
-          Leaf(0.0),
-          CondNode(CategoricalCondition(2, List(7.0, 11.0)), List(
-            Leaf(0.0), Leaf(2.0)
-          )),
-          Leaf(2.0)
-        )).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
+      Leaf(0.0),
+      CondNode(CategoricalCondition(2, List(7.0, 11.0)), List(
+        Leaf(0.0), Leaf(2.0))),
+      Leaf(2.0)
+    )).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | mixed") {
@@ -85,12 +91,9 @@ class C45Test extends AnyFunSuite {
       CondNode(ContinuousCondition(1, 2.5), List(
         CondNode(CategoricalCondition(0, List(1.0, 7.0)), List(
           CondNode(ContinuousCondition(1, 1.5), List(
-            Leaf(0.0), Leaf(2.0)
-          )),
-          Leaf(2.0)
-        )),
-        Leaf(0.0)
-      )),
+            Leaf(0.0), Leaf(2.0))),
+          Leaf(2.0))),
+        Leaf(0.0))),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
