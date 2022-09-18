@@ -1,5 +1,7 @@
 package it.unibo.scalable.ml.dt
 
+import it.unibo.scalable.ml.dt.sequential.Types.Dataset
+
 sealed trait Tree[T] {
   def show(): Unit = {
     def _show(tree: Tree[T], depth: Int): Unit = tree match {
@@ -27,4 +29,11 @@ sealed trait Tree[T] {
 
 case class CondNode[C, T](cond: Condition[C], children: Seq[Tree[T]]) extends Tree[T]
 
-case class Leaf[T](target: T) extends Tree[T]
+object LeafFactory {
+  def get[T <: Seq[Float]](ds: Dataset[T]): Leaf[Float] = Leaf(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1)
+}
+
+case class Leaf[T](target: T) extends Tree[T] {
+  // RIP
+//  def this(ds: Dataset)(implicit ev: Float =:= T) = this(ev(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1))
+}
