@@ -14,7 +14,6 @@ object Main {
       return
     }
 
-
     // test the alg with 1% -> 42876 samples , 5% -> 214380 samples and 10% -> 428759 samples of the original dataset,
     // val testSizeRates = Array(1, 5, 10)
     val datasetPath = args(0)
@@ -23,9 +22,8 @@ object Main {
     val data = new ArrayBuffer[Seq[Float]]();
 
     for ((line, idx) <- src.getLines.drop(1).zipWithIndex) {
-      if (idx % 10000 == 0)
-        println(idx + " rows read")
-
+//      if (idx % 10000 == 0)
+//        println(idx + " rows read")
       data += line.split(',').tail.map(_.trim.toFloat).toSeq
     }
 
@@ -44,16 +42,17 @@ object Main {
       Format.Categorical)
 
 
-//    val y = data.toArray.toSeq
-//    val c45 = new C45
+    val y = data.toArray.toSeq
+    val c45 = new C45
+    c45.run(y, featFormats)
 //    val t1 = System.nanoTime
 //    val dt_time = c45.run(y, featFormats)
 //    val t2 = System.nanoTime() - t1
 
 //    val dt = new C45().run(x.toSeq, featFormats)
-    dt_time.show
+//    dt_time.show
 
-    println(t2 / 1e9d)
+//    println(t2 / 1e9d)
 
 //
 //    val sc = ContextFactory.getContext()
