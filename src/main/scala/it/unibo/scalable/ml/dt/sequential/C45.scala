@@ -30,13 +30,17 @@ class C45 {
   }
 
   // the last value of each sample represents the class target
-  def run[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
+  def run[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format], maxDepth: Int = -1): Tree[Float] = {
 
-    def _run(ds: Dataset[T], attributes: Seq[Attribute]) : Tree[Float]= {
+    def _run(ds: Dataset[T], attributes: Seq[Attribute], maxDepth: Int) : Tree[Float]= {
 
       if (ds.length == 1) return Leaf(ds.head.last)
 
       if (attributes.isEmpty) return LeafFactory.get(ds)
+
+      if (maxDepth == 0 ) return LeafFactory.get(ds)
+
+      val newMaxDepth: Int = if(maxDepth != -1) maxDepth - 1 else -1
 
       // check node purity (all samples belongs to the same target)
       if (ds.forall(_.last == ds.head.last)) return Leaf(ds.head.last)
@@ -49,13 +53,13 @@ class C45 {
         if (attributes.head._1 == Format.Categorical)
           return CondNode(
             CategoricalCondition(attrIndex, attrValues),
-            attrValues.map(v => _run(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1)))
+            attrValues.map(v => _run(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), newMaxDepth))
           )
         else {
           if (attrValues.length == 1) return LeafFactory.get(ds)
 
           val (cond, _, subDss) = bestContinuousSplitPoint(ds, Calc.entropy(ds), attrValues, attrIndex)
-          return CondNode(cond, subDss.map(_run(_, attributes)))
+          return CondNode(cond, subDss.map(_run(_, attributes, newMaxDepth)))
         }
       }
 
@@ -90,10 +94,12 @@ class C45 {
             if (attributes(maxGainRatio._4)._1 == Format.Continuous)
               attributes
             else
-              attributes.patch(maxGainRatio._4, Nil, 1)
-      )))
+              attributes.patch(maxGainRatio._4, Nil, 1),
+            newMaxDepth
+          )))
+
     }
 
-    _run(ds, attributeTypes.zipWithIndex)
+    _run(ds, attributeTypes.zipWithIndex, maxDepth)
   }
 }
