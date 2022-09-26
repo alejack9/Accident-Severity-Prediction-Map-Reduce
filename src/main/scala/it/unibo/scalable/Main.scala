@@ -44,7 +44,11 @@ object Main {
 
     val y = data.toArray.toSeq
     val c45 = new C45
-    c45.run(y, featFormats)
+    val t1 = System.nanoTime
+    c45.run(y, featFormats) //.show
+    val t2 = System.nanoTime() - t1
+    println(t2 / 1e9d)
+
 //    val t1 = System.nanoTime
 //    val dt_time = c45.run(y, featFormats)
 //    val t2 = System.nanoTime() - t1
