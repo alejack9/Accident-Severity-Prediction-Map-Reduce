@@ -1,6 +1,6 @@
 package it.unibo.scalable.ml.dt.sequential
 
-import it.unibo.scalable.ml.dt._
+import it.unibo.scalable.ml.dt.{Tree, _}
 import it.unibo.scalable.ml.dt.sequential.Format.Format
 import it.unibo.scalable.ml.dt.sequential.Types._
 
@@ -14,7 +14,10 @@ object Types {
   type Attribute = (Format, Int)
 }
 
-class C45 {
+class C45() {
+
+  private var root: Tree[Float] = null
+
   private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: Seq[Float], attrIndex: Int)
     : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
       // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
@@ -30,7 +33,7 @@ class C45 {
   }
 
   // the last value of each sample represents the class target
-  def run[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format], maxDepth: Int = -1): Tree[Float] = {
+  def run[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format], maxDepth: Int = -1): Unit = {
 
     def _run(ds: Dataset[T], attributes: Seq[Attribute], maxDepth: Int) : Tree[Float]= {
 
@@ -100,6 +103,27 @@ class C45 {
 
     }
 
-    _run(ds, attributeTypes.zipWithIndex, maxDepth)
+    root = _run(ds, attributeTypes.zipWithIndex, maxDepth)
   }
+
+  def predict[T <: Seq[Float]](data: Dataset[T]): Seq[Float] = {
+
+    def traverse(sample: Seq[Float]): Float = {
+      def _traverse(tree:Tree[Float]): Float ={
+        tree match {
+          case Leaf(target) => target
+          case CondNode(cond, children) => _traverse(children(cond(sample)))
+        }
+      }
+      _traverse(root)
+    }
+
+    data.map(traverse)
+  }
+
+  def score[T <: Seq[Float]](ds: Dataset[T]): Float = {
+    // right predictions / total sample
+    ds.zip(predict(ds.map(_.init))).count{case (real, predicted) => real == predicted} / ds.length
+  }
+
 }
