@@ -2,7 +2,37 @@ package it.unibo.scalable.ml.dt
 
 import it.unibo.scalable.ml.dt.sequential.Types.Dataset
 
+import scala.annotation.tailrec
+
 sealed trait Tree[T] {
+
+  def predict[C <: Seq[Float]](data: Dataset[C]): Seq[T] = {
+    def traverse(sample: C): T = {
+      @tailrec
+      def _traverse(tree: Tree[T]): T = {
+        tree match {
+          case Leaf(target) => target
+          case CondNode(cond, children) => _traverse(children(cond(sample)))
+        }
+      }
+
+      _traverse(this)
+    }
+
+    data.map(traverse)
+  }
+
+  def score[C <: Seq[Float]](ds: Dataset[C]): Float = {
+    val predictedYs = predict(ds.map(_.init))
+    score(ds, predictedYs)
+  }
+
+  def score[C <: Seq[Float]](ds: Dataset[C], ys: Seq[T]): Float = {
+    // right predictions / total sample
+    ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
+  }
+
+
   def show(): Unit = {
     def _show(tree: Tree[T], depth: Int): Unit = tree match {
       case Leaf(target) => println(depth + ": " + target)
