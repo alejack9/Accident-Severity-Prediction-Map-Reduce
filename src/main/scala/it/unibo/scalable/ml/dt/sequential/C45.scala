@@ -36,9 +36,9 @@ class C45() {
   def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
 
     def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Tree[Float] = {
-      println("|ds| : " + ds.length)
-      println("|attrs| : " + attributes.length)
-      println("Depth: " + depth)
+      // println("|ds| : " + ds.length)
+      // println("|attrs| : " + attributes.length)
+      // println("Depth: " + depth)
 
       if (ds.length == 1) return Leaf(ds.head.last)
 
@@ -101,7 +101,7 @@ class C45() {
               attributes
             else
               attributes.patch(maxGainRatio._4, Nil, 1),
-            depth+1
+            depth + 1
           )))
 
     }
