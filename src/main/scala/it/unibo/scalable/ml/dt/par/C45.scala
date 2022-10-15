@@ -1,12 +1,10 @@
-package it.unibo.scalable.ml.dt.sequential
+package it.unibo.scalable.ml.dt.par
 
 import it.unibo.scalable.ml.dt.{Tree, _}
 
-import it.unibo.scalable.ml.dt.sequential.Format.Format
-import it.unibo.scalable.ml.dt.sequential.Types._
+import it.unibo.scalable.ml.dt.par.Format.Format
+import it.unibo.scalable.ml.dt.par.Types._
 import it.unibo.scalable.ml.dt._
-
-import scala.annotation.tailrec
 
 object Format extends Enumeration {
   type Format = Value
@@ -30,6 +28,8 @@ class C45() {
         val partList = List(partitions._1, partitions._2)
         (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
       }).maxBy(_._2)
+
+
 
       (ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat), bestSplitPoint._2, bestSplitPoint._3)
   }
@@ -63,13 +63,13 @@ class C45() {
         if (attributes.head._1 == Format.Categorical)
           return CondNode(
             CategoricalCondition(attrIndex, attrValues),
-            attrValues.map(v => _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth+1))
+            attrValues.par.map(v => _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth+1)).toArray.toSeq
           )
         else {
           if (attrValues.length == 1) return LeafFactory.get(ds)
 
           val (cond, _, subDss) = bestContinuousSplitPoint(ds, Calc.entropy(ds), attrValues, attrIndex)
-          return CondNode(cond, subDss.map(_train(_, attributes, depth+1)))
+          return CondNode(cond, subDss.par.map(_train(_, attributes, depth+1)).toArray.toSeq)
         }
       }
 
@@ -99,6 +99,7 @@ class C45() {
       CondNode(
         maxGainRatio._2,
         maxGainRatio._3
+          .par
           .map(_train(
             _,
             if (attributes(maxGainRatio._4)._1 == Format.Continuous)
@@ -106,7 +107,7 @@ class C45() {
             else
               attributes.patch(maxGainRatio._4, Nil, 1),
             depth + 1
-          )))
+          )).toArray.toSeq)
       } catch {
         case e: StackOverflowError =>
           println(f"Stackoverflow error, leaf created at depth ${depth}")

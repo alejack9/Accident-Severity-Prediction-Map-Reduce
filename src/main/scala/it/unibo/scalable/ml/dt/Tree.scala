@@ -32,7 +32,6 @@ sealed trait Tree[T] {
     ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
   }
 
-
   def show(): Unit = {
     def _show(tree: Tree[T], depth: Int): Unit = tree match {
       case Leaf(target) => println(depth + ": " + target)
@@ -57,13 +56,16 @@ sealed trait Tree[T] {
   }
 }
 
-case class CondNode[C, T](cond: Condition[C], children: Seq[Tree[T]]) extends Tree[T]
+case class CondNode[C, T](cond: Condition[C], children: Seq[Tree[T]]) extends Tree[T] {
+  override def toString = f"CondNode(cond:(${cond}),children:[${children.mkString(", ")}])"
+}
 
 object LeafFactory {
   def get[T <: Seq[Float]](ds: Dataset[T]): Leaf[Float] = Leaf(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1)
 }
 
 case class Leaf[T](target: T) extends Tree[T] {
+  override def toString = f"Leaf(${target})"
   // RIP
 //  def this(ds: Dataset)(implicit ev: Float =:= T) = this(ev(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1))
 }
