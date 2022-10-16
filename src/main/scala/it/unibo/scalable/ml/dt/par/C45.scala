@@ -1,12 +1,10 @@
-package it.unibo.scalable.ml.dt.sequential
+package it.unibo.scalable.ml.dt.par
 
 import it.unibo.scalable.ml.dt.{Tree, _}
-import it.unibo.scalable.ml.dt.sequential.Format.Format
-import it.unibo.scalable.ml.dt.sequential.Types._
-import it.unibo.scalable.ml.dt._
 
-import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
+import it.unibo.scalable.ml.dt.par.Format.Format
+import it.unibo.scalable.ml.dt.par.Types._
+import it.unibo.scalable.ml.dt._
 
 object Format extends Enumeration {
   type Format = Value
@@ -31,58 +29,44 @@ class C45() {
         (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
       }).maxBy(_._2)
 
+
+
       (ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat), bestSplitPoint._2, bestSplitPoint._3)
   }
 
   // the last value of each sample represents the class target
   def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
+    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Tree[Float] = try {
+      // println("|ds| : " + ds.length)
+      // println("|attrs| : " + attributes.length)
+      // println("Depth: " + depth)
 
-    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[Float]] = {
+      if (ds.length == 1) return Leaf(ds.head.last)
 
-      try {
-      println("|ds| : " + ds.length)
-      println("|attrs| : " + attributes.length)
-      println("Depth: " + depth)
-
-      if (ds.length == 1) return Success(Leaf(ds.head.last))
-
-      if (attributes.isEmpty) return Success(LeafFactory.get(ds))
+      if (attributes.isEmpty) return LeafFactory.get(ds)
 
 //      if (maxDepth == 0) return LeafFactory.get(ds)
 //
 //      val newMaxDepth: Int = if (maxDepth != -1) maxDepth - 1 else -1
 
       // check node purity (all samples belongs to the same target)
-      if (ds.forall(_.last == ds.head.last)) return Success(Leaf(ds.head.last))
+      if (ds.forall(_.last == ds.head.last)) return Leaf(ds.head.last)
 
       // only an attribute left
       if (attributes.length == 1) {
         val attrIndex = attributes.head._2
         val attrValues = ds.map(sample => sample(attrIndex)).distinct
 
-        if (attributes.head._1 == Format.Categorical) {
-          return Success(CondNode(
+        if (attributes.head._1 == Format.Categorical)
+          return CondNode(
             CategoricalCondition(attrIndex, attrValues),
-            attrValues.map(v => {
-              _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth+1) match {
-                case Success(value) => value
-                case Failure(_) =>
-//                  println(f"Stackoverflow error, leaf created at depth ${depth}")
-                  LeafFactory.get(ds)
-              }
-            })
-          ))
-        } else {
-          if (attrValues.length == 1) return Success(LeafFactory.get(ds))
+            attrValues.par.map(v => _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth+1)).toArray.toSeq
+          )
+        else {
+          if (attrValues.length == 1) return LeafFactory.get(ds)
 
           val (cond, _, subDss) = bestContinuousSplitPoint(ds, Calc.entropy(ds), attrValues, attrIndex)
-          return Success(CondNode(cond, subDss.map(_train(_, attributes, depth + 1) match {
-            case Success(value) => value
-            case Failure(_) => {
-//              println(f"Stackoverflow error, leaf created at depth ${depth}")
-              LeafFactory.get(ds)
-            }
-          })))
+          return CondNode(cond, subDss.par.map(_train(_, attributes, depth+1)).toArray.toSeq)
         }
       }
 
@@ -105,13 +89,14 @@ class C45() {
         }
       }
 
-      if (infoGainRatios.forall(_._1 == 0.0f)) return Success(LeafFactory.get(ds))
+      if (infoGainRatios.forall(_._1 == 0.0f)) return LeafFactory.get(ds)
 
       val maxGainRatio = infoGainRatios.maxBy(_._1)
 
-      Success(CondNode(
+      CondNode(
         maxGainRatio._2,
         maxGainRatio._3
+          .par
           .map(_train(
             _,
             if (attributes(maxGainRatio._4)._1 == Format.Continuous)
@@ -119,29 +104,17 @@ class C45() {
             else
               attributes.patch(maxGainRatio._4, Nil, 1),
             depth + 1
-          ) match {
-            case Success(value) => value
-            case Failure(_) =>
-//              println(f"Stackoverflow error, leaf created at depth ${depth}")
-              LeafFactory.get(ds)
-          })))
+          )).toArray.toSeq)
       } catch {
-        case e: StackOverflowError =>
-          Failure(e)
-//          println(f"Stackoverflow error, leaf created at depth ${depth}")
-//          LeafFactory.get(ds)
-
-        case e: OutOfMemoryError =>
-          Failure(e)
-//          println(f"OutOfMemory error, leaf created at depth ${depth}")
-//          LeafFactory.get(ds)
+      case _: StackOverflowError =>
+        println(f"Stackoverflow error, leaf created at depth ${depth}")
+        LeafFactory.get(ds)
+      case _: OutOfMemoryError =>
+          println(f"OutOfMemory error, leaf created at depth ${depth}")
+          LeafFactory.get(ds)
       }
-    }
 
-    _train(ds, attributeTypes.zipWithIndex, 0) match {
-      case Success(toRet) => toRet
-      case Failure(e) => throw e
-    }
+    _train(ds, attributeTypes.zipWithIndex, 0)
   }
 
 //  def predict[T <: Seq[Float]](data: Dataset[T]): Seq[Float] = {

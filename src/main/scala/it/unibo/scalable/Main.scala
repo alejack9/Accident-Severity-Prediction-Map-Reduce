@@ -2,8 +2,15 @@ package it.unibo.scalable
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.io.Source
+
+//import it.unibo.scalable.ml.dt.par.C45
+//import it.unibo.scalable.ml.dt.par.Format
+
 import it.unibo.scalable.ml.dt.sequential.C45
 import it.unibo.scalable.ml.dt.sequential.Format
+
+import it.unibo.scalable.ml.dt.TreeSaver
+import java.io.File
 
 //import it.unibo.scalable.ml.dt.spark.{C45, ContextFactory}
 
@@ -64,13 +71,18 @@ object Main {
     val predictedYs = tree.predict(testData)
     val testTime = System.nanoTime - t1
     val score = tree.score(testData, predictedYs)
+
     println("{" +
       "  trainTime: "   + trainTime / 1e9d +
       ", testTime: " + testTime / 1e9d +
       ", score: " + score +
       "}")
 
-//
+    val outPath = trainDSPath.split("\\" + File.separator).init.mkString(File.separator)
+    val outFilename = trainDSPath.split("\\" + File.separator).last + ".tree"
+
+    TreeSaver.save(tree, outPath + File.separator + outFilename)
+
 //    val sc = ContextFactory.getContext()
 //
 //    val rdd = sc.textFile(trainDSPath)

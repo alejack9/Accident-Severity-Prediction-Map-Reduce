@@ -1,7 +1,7 @@
-package it.unibo.scalable.ml.dt.sequential
+package it.unibo.scalable.ml.dt.par
 
-import it.unibo.scalable.ml.dt._
 import org.scalatest.funsuite.AnyFunSuite
+import it.unibo.scalable.ml.dt._
 
 class C45Test extends AnyFunSuite {
   val D: Seq[Seq[Float]] = List(
@@ -14,13 +14,13 @@ class C45Test extends AnyFunSuite {
 
   val dtc = new C45
 
-//  private def printDs(): Unit = {
-//        println("________Dataset_______")
-//        println("| a_0  a_1  a_2    c |")
-//        println("|--------------------|")
-//        D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
-//        println("----------------------")
-//  }
+  private def printDs(): Unit = {
+    println("________Dataset_______")
+    println("| a_0  a_1  a_2    c |")
+    println("|--------------------|")
+    D.sortBy(_.head).foreach{row => println("| % 3.0f  % 3.0f  % 3.0f  % 3.0f |".format(row(0), row(1), row(2), row(3)))}
+    println("----------------------")
+  }
 
   test("a_0 | continuous") {
     val t = dtc.train(D.map(sample => List(sample.head, sample.last)), List(Format.Continuous))
@@ -54,11 +54,11 @@ class C45Test extends AnyFunSuite {
   test("a0 a1 | mixed") {
     val t = dtc.train(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Categorical))
     assert (t == CondNode(ContinuousCondition(0, 5.0), List(
-        CondNode(ContinuousCondition(0, 2.0), List(
-          CondNode(CategoricalCondition(1, List(1.0, 2.0, 9.0)), List(
-            Leaf(0.0),Leaf(2.0),Leaf(2.0))),
-          Leaf(0.0))),
-        Leaf(2.0)
+      CondNode(ContinuousCondition(0, 2.0), List(
+        CondNode(CategoricalCondition(1, List(1.0, 2.0, 9.0)), List(
+          Leaf(0.0),Leaf(2.0),Leaf(2.0))),
+        Leaf(0.0))),
+      Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
@@ -99,10 +99,9 @@ class C45Test extends AnyFunSuite {
   }
 
 
-  test("toString") {
+  test("all ds | mixed | toString"){
     val t = dtc.train(D, List(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:List(CondNode(cond:(feat 1 < 2.5),children:List(CondNode(cond:(feat 0 List(1.0, 7.0)),children:List(CondNode(cond:(feat 1 < 1.5),children:List(Leaf(0.0), Leaf(2.0))), Leaf(2.0))), Leaf(0.0))), Leaf(2.0)))"))
+    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:[CondNode(cond:(feat 1 < 2.5),children:[CondNode(cond:(feat 0 List(1.0, 7.0)),children:[CondNode(cond:(feat 1 < 1.5),children:[Leaf(0.0), Leaf(2.0)]), Leaf(2.0)]), Leaf(0.0)]), Leaf(2.0)])"))
   }
 }
-
 
