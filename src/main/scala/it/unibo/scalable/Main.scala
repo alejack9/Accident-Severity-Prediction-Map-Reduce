@@ -3,8 +3,11 @@ package it.unibo.scalable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.io.Source
 
-import it.unibo.scalable.ml.dt.par.C45
-import it.unibo.scalable.ml.dt.par.Format
+//import it.unibo.scalable.ml.dt.par.C45
+//import it.unibo.scalable.ml.dt.par.Format
+
+import it.unibo.scalable.ml.dt.sequential.C45
+import it.unibo.scalable.ml.dt.sequential.Format
 
 import it.unibo.scalable.ml.dt.TreeSaver
 import java.io.File
@@ -75,8 +78,8 @@ object Main {
       ", score: " + score +
       "}")
 
-    val outPath = trainDSPath.split(File.separator).init.mkString(File.separator)
-    val outFilename = trainDSPath.split(File.separator).last + ".tree"
+    val outPath = trainDSPath.split("\\" + File.separator).init.mkString(File.separator)
+    val outFilename = trainDSPath.split("\\" + File.separator).last + ".tree"
 
     TreeSaver.save(tree, outPath + File.separator + outFilename)
 

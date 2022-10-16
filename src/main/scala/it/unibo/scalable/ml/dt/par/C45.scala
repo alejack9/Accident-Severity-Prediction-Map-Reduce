@@ -36,10 +36,7 @@ class C45() {
 
   // the last value of each sample represents the class target
   def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
-
-    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Tree[Float] = {
-
-      try {
+    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Tree[Float] = try {
       // println("|ds| : " + ds.length)
       // println("|attrs| : " + attributes.length)
       // println("Depth: " + depth)
@@ -109,15 +106,13 @@ class C45() {
             depth + 1
           )).toArray.toSeq)
       } catch {
-        case e: StackOverflowError =>
-          println(f"Stackoverflow error, leaf created at depth ${depth}")
-          LeafFactory.get(ds)
-
-        case e: OutOfMemoryError =>
+      case _: StackOverflowError =>
+        println(f"Stackoverflow error, leaf created at depth ${depth}")
+        LeafFactory.get(ds)
+      case _: OutOfMemoryError =>
           println(f"OutOfMemory error, leaf created at depth ${depth}")
           LeafFactory.get(ds)
       }
-    }
 
     _train(ds, attributeTypes.zipWithIndex, 0)
   }
