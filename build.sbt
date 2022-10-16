@@ -14,7 +14,6 @@ ThisBuild / assemblyMergeStrategy := {
 //libraryDependencies += "org.apache.spark" %% "spark-mllib" % "3.2.1"
 //libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % Test
-libraryDependencies += "net.liftweb" %% "lift-json" % "3.5.0"
 
 //javacOptions ++= Seq("-source", "8", "-target", "8")
 
