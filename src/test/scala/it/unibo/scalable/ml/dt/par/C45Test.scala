@@ -3,6 +3,8 @@ package it.unibo.scalable.ml.dt.par
 import org.scalatest.funsuite.AnyFunSuite
 import it.unibo.scalable.ml.dt._
 
+import it.unibo.scalable.ml.dt.Utils.Format
+
 class C45Test extends AnyFunSuite {
   val D: Seq[Seq[Float]] = List(
     Seq(3, 3, 5, 0),

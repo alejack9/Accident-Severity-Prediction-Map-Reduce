@@ -1,6 +1,8 @@
 package it.unibo.scalable.ml.dt.sequential
 
 import it.unibo.scalable.ml.dt._
+import it.unibo.scalable.ml.dt.Utils.Format
+
 import org.scalatest.funsuite.AnyFunSuite
 
 class C45Test extends AnyFunSuite {

@@ -1,72 +1,75 @@
 package it.unibo.scalable.ml.dt.par
 
+import it.unibo.scalable.ml.dt.Utils.Format
+import it.unibo.scalable.ml.dt.Utils.Format.Format
+import it.unibo.scalable.ml.dt.Utils.Types.{Attribute, Dataset}
 import it.unibo.scalable.ml.dt.{Tree, _}
 
-import it.unibo.scalable.ml.dt.par.Format.Format
-import it.unibo.scalable.ml.dt.par.Types._
-import it.unibo.scalable.ml.dt._
+import scala.util.{Failure, Success, Try}
 
-object Format extends Enumeration {
-  type Format = Value
-  val Categorical, Continuous = Value
-}
-
-object Types {
-  type Dataset[T <: Seq[Float]] = Seq[T]
-  type Attribute = (Format, Int)
-}
-
-class C45() {
+class C45() extends C45Alg {
 
   private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: Seq[Float], attrIndex: Int)
-    : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
-      // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
-      val midPoints = attrValues.sorted.init.zip(attrValues.sorted.tail).map{case (a, b) => (a + b) / 2.0 }
+  : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
+    // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
+    val midPoints = attrValues.sorted.init.zip(attrValues.sorted.tail).map { case (a, b) => (a + b) / 2.0 }
 
-      val bestSplitPoint = midPoints.map(midpoint => {
-        val partitions = ds.partition(row => row(attrIndex) < midpoint)
-        val partList = List(partitions._1, partitions._2)
-        (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
-      }).maxBy(_._2)
+    val bestSplitPoint = midPoints.map(midpoint => {
+      val partitions = ds.partition(row => row(attrIndex) < midpoint)
+      val partList = List(partitions._1, partitions._2)
+      (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
+    }).maxBy(_._2)
 
-
-
-      (ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat), bestSplitPoint._2, bestSplitPoint._3)
+    (ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat), bestSplitPoint._2, bestSplitPoint._3)
   }
 
   // the last value of each sample represents the class target
-  def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
-    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Tree[Float] = try {
-      // println("|ds| : " + ds.length)
-      // println("|attrs| : " + attributes.length)
-      // println("Depth: " + depth)
+  override def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
 
-      if (ds.length == 1) return Leaf(ds.head.last)
+    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[Float]] = try {
+      //        println("|ds| : " + ds.length)
+      //        println("|attrs| : " + attributes.length)
+      //        println("Depth: " + depth)
 
-      if (attributes.isEmpty) return LeafFactory.get(ds)
+      if (ds.length == 1) return Success(Leaf(ds.head.last))
 
-//      if (maxDepth == 0) return LeafFactory.get(ds)
-//
-//      val newMaxDepth: Int = if (maxDepth != -1) maxDepth - 1 else -1
+      if (attributes.isEmpty) return Success(LeafFactory.get(ds))
+
+      //      if (maxDepth == 0) return LeafFactory.get(ds)
+      //
+      //      val newMaxDepth: Int = if (maxDepth != -1) maxDepth - 1 else -1
 
       // check node purity (all samples belongs to the same target)
-      if (ds.forall(_.last == ds.head.last)) return Leaf(ds.head.last)
+      if (ds.forall(_.last == ds.head.last)) return Success(Leaf(ds.head.last))
 
       // only an attribute left
       if (attributes.length == 1) {
         val attrIndex = attributes.head._2
         val attrValues = ds.map(sample => sample(attrIndex)).distinct
 
-        if (attributes.head._1 == Format.Categorical)
-          return CondNode(
+        if (attributes.head._1 == Format.Categorical) {
+          return Success(CondNode(
             CategoricalCondition(attrIndex, attrValues),
-            attrValues.par.map(v => _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth+1)).toArray.toSeq
-          )
-        else {
-          if (attrValues.length == 1) return LeafFactory.get(ds)
+            attrValues.map(v => {
+              _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth + 1) match {
+                case Success(value) => value
+                case Failure(_) =>
+                  //                  println(f"Stackoverflow error, leaf created at depth ${depth}")
+                  LeafFactory.get(ds)
+              }
+            })
+          ))
+        } else {
+          if (attrValues.length == 1) return Success(LeafFactory.get(ds))
 
           val (cond, _, subDss) = bestContinuousSplitPoint(ds, Calc.entropy(ds), attrValues, attrIndex)
-          return CondNode(cond, subDss.par.map(_train(_, attributes, depth+1)).toArray.toSeq)
+          return Success(CondNode(cond, subDss.map(_train(_, attributes, depth + 1) match {
+            case Success(value) => value
+            case Failure(_) => {
+              //              println(f"Stackoverflow error, leaf created at depth ${depth}")
+              LeafFactory.get(ds)
+            }
+          })))
         }
       }
 
@@ -89,14 +92,13 @@ class C45() {
         }
       }
 
-      if (infoGainRatios.forall(_._1 == 0.0f)) return LeafFactory.get(ds)
+      if (infoGainRatios.forall(_._1 == 0.0f)) return Success(LeafFactory.get(ds))
 
       val maxGainRatio = infoGainRatios.maxBy(_._1)
 
-      CondNode(
+      Success(CondNode(
         maxGainRatio._2,
         maxGainRatio._3
-          .par
           .map(_train(
             _,
             if (attributes(maxGainRatio._4)._1 == Format.Continuous)
@@ -104,40 +106,51 @@ class C45() {
             else
               attributes.patch(maxGainRatio._4, Nil, 1),
             depth + 1
-          )).toArray.toSeq)
-      } catch {
-      case _: StackOverflowError =>
-        println(f"Stackoverflow error, leaf created at depth ${depth}")
-        LeafFactory.get(ds)
-      case _: OutOfMemoryError =>
-          println(f"OutOfMemory error, leaf created at depth ${depth}")
-          LeafFactory.get(ds)
-      }
+          ) match {
+            case Success(value) => value
+            case Failure(_) =>
+              //              println(f"Stackoverflow error, leaf created at depth ${depth}")
+              LeafFactory.get(ds)
+          })))
+    } catch {
+      case e: StackOverflowError =>
+        Failure(e)
+      //          println(f"Stackoverflow error, leaf created at depth ${depth}")
+      //          LeafFactory.get(ds)
 
-    _train(ds, attributeTypes.zipWithIndex, 0)
+      case e: OutOfMemoryError =>
+        Failure(e)
+      //          println(f"OutOfMemory error, leaf created at depth ${depth}")
+      //          LeafFactory.get(ds)
+    }
+
+    _train(ds, attributeTypes.zipWithIndex, 0) match {
+      case Success(toRet) => toRet
+      case Failure(e) => throw e
+    }
   }
 
-//  def predict[T <: Seq[Float]](data: Dataset[T]): Seq[Float] = {
-//
-//    def traverse(sample: Seq[Float]): Float = {
-//      @tailrec
-//      def _traverse(tree:Tree[Float]): Float ={
-//        tree match {
-//          case Leaf(target) => target
-//          case CondNode(cond, children) => _traverse(children(cond(sample)))
-//        }
-//      }
-//      _traverse(tree)
-//    }
-//
-//    data.map(traverse)
-//  }
+  //  def predict[T <: Seq[Float]](data: Dataset[T]): Seq[Float] = {
+  //
+  //    def traverse(sample: Seq[Float]): Float = {
+  //      @tailrec
+  //      def _traverse(tree:Tree[Float]): Float ={
+  //        tree match {
+  //          case Leaf(target) => target
+  //          case CondNode(cond, children) => _traverse(children(cond(sample)))
+  //        }
+  //      }
+  //      _traverse(tree)
+  //    }
+  //
+  //    data.map(traverse)
+  //  }
 
-//  def score[T <: Seq[Float]](ds: Dataset[T]): Float = {
-//    val predictedYs = predict(ds.map(_.init))
-//
-//    // right predictions / total sample
-//    ds.zip(predictedYs).count{case (row, predicted) => row.last == predicted} / ds.length
-//  }
+  //  def score[T <: Seq[Float]](ds: Dataset[T]): Float = {
+  //    val predictedYs = predict(ds.map(_.init))
+  //
+  //    // right predictions / total sample
+  //    ds.zip(predictedYs).count{case (row, predicted) => row.last == predicted} / ds.length
+  //  }
 
 }

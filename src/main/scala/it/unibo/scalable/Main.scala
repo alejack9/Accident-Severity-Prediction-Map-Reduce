@@ -2,17 +2,9 @@ package it.unibo.scalable
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.io.Source
-
-//import it.unibo.scalable.ml.dt.par.C45
-//import it.unibo.scalable.ml.dt.par.Format
-
-import it.unibo.scalable.ml.dt.sequential.C45
-import it.unibo.scalable.ml.dt.sequential.Format
-
-import it.unibo.scalable.ml.dt.TreeSaver
 import java.io.File
-
-//import it.unibo.scalable.ml.dt.spark.{C45, ContextFactory}
+import it.unibo.scalable.ml.dt._
+import it.unibo.scalable.ml.dt.Utils._
 
 object Main {
   def main(args : Array[String]): Unit = {
@@ -20,9 +12,23 @@ object Main {
       println("Training ds not provided")
       sys.exit(-1)
     }
+
     if (args.length == 1) {
       println("Test ds not provided")
       sys.exit(-1)
+    }
+
+    if (args.length == 2) {
+      println("Computation mode not provided")
+      sys.exit(-1)
+    }
+
+    val c45 : C45Alg = args(2) match {
+      case "seq" => new sequential.C45
+      case "par" => new par.C45
+      case _ =>
+        println("Available algorithms: seq, par")
+        sys.exit(-1)
     }
 
     // test the alg with 1% -> 42876 samples , 5% -> 214380 samples and 10% -> 428759 samples of the original dataset,
@@ -49,7 +55,6 @@ object Main {
 
     // read mode changed because it got overhead error
     //val x: Iterator[Seq[Float]] = trainSrc.getLines.drop(1).map(r => r.split(',').map(_.trim).tail.map(_.toFloat))
-
     val featFormats = List(
       Format.Continuous,Format.Continuous, Format.Categorical, Format.Continuous,Format.Continuous,Format.Continuous,Format.Continuous,
       Format.Continuous,Format.Categorical,Format.Categorical,Format.Categorical,Format.Continuous,Format.Categorical,
@@ -61,9 +66,7 @@ object Main {
       Format.Categorical,Format.Categorical,Format.Categorical,Format.Continuous,Format.Continuous,Format.Continuous,Format.Continuous,
       Format.Categorical)
 
-
     val y = trainData.toArray.toSeq
-    val c45 = new C45
     var t1 = System.nanoTime
     val tree = c45.train(y, featFormats) //.show
     val trainTime = System.nanoTime - t1

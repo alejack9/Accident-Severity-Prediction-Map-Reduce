@@ -1,6 +1,6 @@
 package it.unibo.scalable.ml.dt
 
-import it.unibo.scalable.ml.dt.sequential.Types.Dataset
+import it.unibo.scalable.ml.dt.Utils.Types.Dataset
 
 object Calc {
 
