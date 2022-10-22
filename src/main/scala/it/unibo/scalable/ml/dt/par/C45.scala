@@ -35,10 +35,6 @@ class C45() extends C45Alg {
 
       if (attributes.isEmpty) return Success(LeafFactory.get(ds))
 
-      //      if (maxDepth == 0) return LeafFactory.get(ds)
-      //
-      //      val newMaxDepth: Int = if (maxDepth != -1) maxDepth - 1 else -1
-
       // check node purity (all samples belongs to the same target)
       if (ds.forall(_.last == ds.head.last)) return Success(Leaf(ds.head.last))
 
@@ -65,10 +61,9 @@ class C45() extends C45Alg {
           val (cond, _, subDss) = bestContinuousSplitPoint(ds, Calc.entropy(ds), attrValues, attrIndex)
           return Success(CondNode(cond, subDss.map(_train(_, attributes, depth + 1) match {
             case Success(value) => value
-            case Failure(_) => {
-              //              println(f"Stackoverflow error, leaf created at depth ${depth}")
+            case Failure(_) =>
+              // Stackoverflow error, leaf created instead
               LeafFactory.get(ds)
-            }
           })))
         }
       }
@@ -86,7 +81,6 @@ class C45() extends C45Alg {
           val branches = ds.groupBy(sample => sample(attrIndex)).values.toList
           (Calc.infoGainRatio(dsEntropy, branches, ds.length), cond, branches, index)
         } else { // continuous case
-
           val (cond, infoGainRatio, subDss) = bestContinuousSplitPoint(ds, dsEntropy, attrValues, attrIndex)
           (infoGainRatio, cond, subDss, index)
         }
@@ -109,19 +103,14 @@ class C45() extends C45Alg {
           ) match {
             case Success(value) => value
             case Failure(_) =>
-              //              println(f"Stackoverflow error, leaf created at depth ${depth}")
+              // Stackoverflow error, leaf created instead
               LeafFactory.get(ds)
           })))
     } catch {
       case e: StackOverflowError =>
         Failure(e)
-      //          println(f"Stackoverflow error, leaf created at depth ${depth}")
-      //          LeafFactory.get(ds)
-
       case e: OutOfMemoryError =>
         Failure(e)
-      //          println(f"OutOfMemory error, leaf created at depth ${depth}")
-      //          LeafFactory.get(ds)
     }
 
     _train(ds, attributeTypes.zipWithIndex, 0) match {
@@ -129,28 +118,4 @@ class C45() extends C45Alg {
       case Failure(e) => throw e
     }
   }
-
-  //  def predict[T <: Seq[Float]](data: Dataset[T]): Seq[Float] = {
-  //
-  //    def traverse(sample: Seq[Float]): Float = {
-  //      @tailrec
-  //      def _traverse(tree:Tree[Float]): Float ={
-  //        tree match {
-  //          case Leaf(target) => target
-  //          case CondNode(cond, children) => _traverse(children(cond(sample)))
-  //        }
-  //      }
-  //      _traverse(tree)
-  //    }
-  //
-  //    data.map(traverse)
-  //  }
-
-  //  def score[T <: Seq[Float]](ds: Dataset[T]): Float = {
-  //    val predictedYs = predict(ds.map(_.init))
-  //
-  //    // right predictions / total sample
-  //    ds.zip(predictedYs).count{case (row, predicted) => row.last == predicted} / ds.length
-  //  }
-
 }
