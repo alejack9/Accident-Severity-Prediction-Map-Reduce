@@ -1,6 +1,6 @@
 package it.unibo.scalable
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import java.io.File
 import it.unibo.scalable.ml.dt._
@@ -8,6 +8,7 @@ import it.unibo.scalable.ml.dt.Utils._
 
 object Main {
   def main(args : Array[String]): Unit = {
+
     if (args.length == 0) {
       println("Training ds not provided")
       sys.exit(-1)
@@ -23,12 +24,11 @@ object Main {
       sys.exit(-1)
     }
 
-    val c45 : C45Alg = args(2) match {
-      case "seq" => new sequential.C45
-      case "par" => new par.C45
-      case _ =>
-        println("Available algorithms: seq, par")
-        sys.exit(-1)
+    val modes = Array("seq", "par")
+
+    if (!modes.contains(args(2))) {
+      println("Available computation modes: " + modes.mkString(", "))
+      sys.exit(-1)
     }
 
     // test the alg with 1% -> 42876 samples , 5% -> 214380 samples and 10% -> 428759 samples of the original dataset,
@@ -37,21 +37,16 @@ object Main {
     val testDSPath = args(1)
 
     val trainSrc = Source.fromFile(trainDSPath)
-    val testSrc = Source.fromFile(trainDSPath)
+    val testSrc = Source.fromFile(testDSPath)
+
     val trainData = new ArrayBuffer[Seq[Float]]()
     val testData = new ArrayBuffer[Seq[Float]]()
 
-    for ((line, idx) <- trainSrc.getLines.drop(1).zipWithIndex) {
-      //      if (idx % 10000 == 0)
-      //        println(idx + " rows read")
+    for (line <- trainSrc.getLines.drop(1))
       trainData += line.split(',').tail.map(_.trim.toFloat).toSeq
-    }
 
-    for ((line, idx) <- testSrc.getLines.drop(1).zipWithIndex) {
-      //      if (idx % 10000 == 0)
-      //        println(idx + " rows read")
+    for (line <- testSrc.getLines.drop(1))
       testData += line.split(',').tail.map(_.trim.toFloat).toSeq
-    }
 
     // read mode changed because it got overhead error
     //val x: Iterator[Seq[Float]] = trainSrc.getLines.drop(1).map(r => r.split(',').map(_.trim).tail.map(_.toFloat))
@@ -66,13 +61,23 @@ object Main {
       Format.Categorical,Format.Categorical,Format.Categorical,Format.Continuous,Format.Continuous,Format.Continuous,Format.Continuous,
       Format.Categorical)
 
-    val y = trainData.toArray.toSeq
+    val input = args(2) match {
+      case "seq" => trainData.toArray.toSeq
+      case "par" => trainData.toArray.toSeq.par
+    }
+
+    println("Computation mode: " + args(2))
+
+    val c45 : C45Alg = new sequential.C45
+
     var t1 = System.nanoTime
-    val tree = c45.train(y, featFormats) //.show
+    val tree = c45.train(input, featFormats) //.show
     val trainTime = System.nanoTime - t1
+
     t1 = System.nanoTime
     val predictedYs = tree.predict(testData)
     val testTime = System.nanoTime - t1
+
     val score = tree.score(testData, predictedYs)
 
     println("{" +

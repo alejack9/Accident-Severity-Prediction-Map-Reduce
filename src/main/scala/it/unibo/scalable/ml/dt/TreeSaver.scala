@@ -2,11 +2,12 @@ package it.unibo.scalable.ml.dt
 
 import java.io._
 import scala.annotation.tailrec
+import scala.collection.GenSeq
 
 object TreeSaver {
 
   @tailrec
-  private def saveTree[T](nodes: Seq[(Int, Tree[T])], pw: PrintWriter): Unit = nodes match {
+  private def saveTree[T](nodes: GenSeq[(Int, Tree[T])], pw: PrintWriter): Unit = nodes match {
     case x :: xs => x match {
       case (depth, CondNode(cond, children)) =>
         pw.write(f"$depth - ${cond.toString} | ")

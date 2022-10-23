@@ -3,7 +3,7 @@ package it.unibo.scalable.ml.dt.par
 import it.unibo.scalable.ml.dt.Utils.Format
 import it.unibo.scalable.ml.dt.Utils.Format.Format
 import it.unibo.scalable.ml.dt.Utils.Types.{Attribute, Dataset}
-import it.unibo.scalable.ml.dt.{Tree, _}
+import it.unibo.scalable.ml.dt.{C45Alg, Calc, CategoricalCondition, CondNode, Condition, ContinuousCondition, Leaf, LeafFactory, Tree}
 
 import scala.util.{Failure, Success, Try}
 
@@ -41,7 +41,7 @@ class C45() extends C45Alg {
       // only an attribute left
       if (attributes.length == 1) {
         val attrIndex = attributes.head._2
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.seq
 
         if (attributes.head._1 == Format.Categorical) {
           return Success(CondNode(
@@ -50,7 +50,7 @@ class C45() extends C45Alg {
               _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth + 1) match {
                 case Success(value) => value
                 case Failure(_) =>
-                  //                  println(f"Stackoverflow error, leaf created at depth ${depth}")
+                  // Stackoverflow error, leaf created instead
                   LeafFactory.get(ds)
               }
             })
@@ -72,7 +72,7 @@ class C45() extends C45Alg {
       val dsEntropy = Calc.entropy(ds)
 
       val infoGainRatios: Seq[(Float, Condition[_ <: Float], Seq[Dataset[T]], Int)] = attributes.zipWithIndex.map { case ((format, attrIndex), index) =>
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.seq
 
         if (attrValues.length == 1) (0.0f, CategoricalCondition(index, Nil), Nil, -1)
         else if (format == Format.Categorical) {
@@ -113,7 +113,7 @@ class C45() extends C45Alg {
         Failure(e)
     }
 
-    _train(ds, attributeTypes.zipWithIndex, 0) match {
+    _train(ds.par, attributeTypes.zipWithIndex, 0) match {
       case Success(toRet) => toRet
       case Failure(e) => throw e
     }

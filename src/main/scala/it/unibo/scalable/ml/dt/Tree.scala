@@ -3,10 +3,11 @@ package it.unibo.scalable.ml.dt
 import it.unibo.scalable.ml.dt.Utils.Types.Dataset
 
 import scala.annotation.tailrec
+import scala.collection.GenSeq
 
 sealed trait Tree[T] {
 
-  def predict[C <: Seq[Float]](data: Dataset[C]): Seq[T] = {
+  def predict[C <: Seq[Float]](data: Dataset[C]): GenSeq[T] = {
     def traverse(sample: C): T = {
       @tailrec
       def _traverse(tree: Tree[T]): T = {
@@ -27,7 +28,7 @@ sealed trait Tree[T] {
     score(ds, predictedYs)
   }
 
-  def score[C <: Seq[Float]](ds: Dataset[C], ys: Seq[T]): Float = {
+  def score[C <: Seq[Float]](ds: Dataset[C], ys: GenSeq[T]): Float = {
     // right predictions / total sample
     ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
   }
@@ -56,7 +57,7 @@ sealed trait Tree[T] {
   }
 }
 
-case class CondNode[C, T](cond: Condition[C], children: Seq[Tree[T]]) extends Tree[T] {
+case class CondNode[C, T](cond: Condition[C], children: GenSeq[Tree[T]]) extends Tree[T] {
   override def toString = f"CondNode(cond:(${cond}),children:[${children.mkString(", ")}])"
 }
 

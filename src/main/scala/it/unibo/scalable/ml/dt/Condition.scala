@@ -1,5 +1,7 @@
 package it.unibo.scalable.ml.dt
 
+import scala.collection.GenSeq
+
 sealed trait Condition[T] extends (Seq[T] => Int) {
   protected def fun: Seq[T] => Int
   protected val desc: String
@@ -15,7 +17,7 @@ case class ContinuousCondition[T : Ordering](private val index: Int, private val
   override val desc = s"feat $index < $threshold"
 }
 
-case class CategoricalCondition[T](private val index: Int, private val attrValues: Seq[T])
+case class CategoricalCondition[T](private val index: Int, private val attrValues: GenSeq[T])
   extends Condition[T] {
   override def fun: Seq[T] => Int = (sample: Seq[T]) => attrValues.indexOf(sample(index))
   override val desc = s"feat $index $attrValues"
