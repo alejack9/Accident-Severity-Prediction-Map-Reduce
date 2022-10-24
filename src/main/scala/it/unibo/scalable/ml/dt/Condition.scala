@@ -20,5 +20,5 @@ case class ContinuousCondition[T : Ordering](private val index: Int, private val
 case class CategoricalCondition[T](private val index: Int, private val attrValues: GenSeq[T])
   extends Condition[T] {
   override def fun: Seq[T] => Int = (sample: Seq[T]) => attrValues.indexOf(sample(index))
-  override val desc = s"feat $index $attrValues"
+  override val desc = s"feat $index ${attrValues.mkString("[ "," , "," ]")}"
 }
