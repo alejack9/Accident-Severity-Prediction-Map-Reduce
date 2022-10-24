@@ -13,7 +13,6 @@ class C45Test extends AnyFunSuite {
     Seq(1, 9, 11, 2),
     Seq(7, 1, 3, 2)
   ).map(_.map(_.toFloat))
-
   val dtc = new C45
 
 //  private def printDs(): Unit = {
@@ -35,8 +34,8 @@ class C45Test extends AnyFunSuite {
 
   test("a_0 | categorical") {
     val t = dtc.train(D.map(sample => List(sample.head, sample.last)), List(Format.Categorical))
-    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
-      Leaf(0.0), Leaf(2.0), Leaf(2.0)
+    assert(t == CondNode(CategoricalCondition(0, List(1.0, 3.0, 7.0)), List(
+      Leaf(2.0), Leaf(0.0), Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
@@ -79,10 +78,10 @@ class C45Test extends AnyFunSuite {
 
   test("all ds | categorical") {
     val t = dtc.train(D, List(Format.Categorical, Format.Categorical, Format.Categorical))
-    assert(t == CondNode(CategoricalCondition(0, List(3.0, 1.0, 7.0)), List(
-      Leaf(0.0),
+    assert(t == CondNode(CategoricalCondition(0, List(1.0, 3.0, 7.0)), List(
       CondNode(CategoricalCondition(2, List(7.0, 11.0)), List(
         Leaf(0.0), Leaf(2.0))),
+      Leaf(0.0),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
@@ -100,10 +99,9 @@ class C45Test extends AnyFunSuite {
     )).asInstanceOf[Tree[Float]])
   }
 
-
   test("toString") {
     val t = dtc.train(D, List(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:List(CondNode(cond:(feat 1 < 2.5),children:List(CondNode(cond:(feat 0 List(1.0, 7.0)),children:List(CondNode(cond:(feat 1 < 1.5),children:List(Leaf(0.0), Leaf(2.0))), Leaf(2.0))), Leaf(0.0))), Leaf(2.0)))"))
+    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:[CondNode(cond:(feat 1 < 2.5),children:[CondNode(cond:(feat 0 [ 1.0 , 7.0 ]),children:[CondNode(cond:(feat 1 < 1.5),children:[Leaf(0.0), Leaf(2.0)]), Leaf(2.0)]), Leaf(0.0)]), Leaf(2.0)])"))
   }
 }
 

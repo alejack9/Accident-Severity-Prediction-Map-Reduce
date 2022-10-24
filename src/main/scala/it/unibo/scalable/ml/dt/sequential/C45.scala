@@ -1,11 +1,11 @@
 package it.unibo.scalable.ml.dt.sequential
 
-import it.unibo.scalable.ml.dt.Utils.Format
+import it.unibo.scalable.ml.dt.Utils.{Format, GenSeqSort}
 import it.unibo.scalable.ml.dt.Utils.Format.Format
 import it.unibo.scalable.ml.dt.Utils.Types.{Attribute, Dataset}
 import it.unibo.scalable.ml.dt.{Tree, _}
 
-import scala.collection.GenSeq
+import scala.collection.{GenSeq, SortedMap}
 import scala.collection.parallel.ParSeq
 import scala.util.{Failure, Success, Try}
 
@@ -15,10 +15,8 @@ class C45() extends C45Alg {
   : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
       // https://stackoverflow.com/a/23847107 : best way to sort the array if par -> convert parseq to seq an then back to parseq
       // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
-      val attrValuesSorted = attrValues match {
-        case c: Seq[Float] => c.sorted
-        case _ => attrValues.seq.sorted.par
-      }
+
+      val attrValuesSorted = attrValues.sort()
       val midPoints = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) => (a + b) / 2.0f }
 
       val bestSplitPoint = midPoints.map(midpoint => {
@@ -48,7 +46,7 @@ class C45() extends C45Alg {
       // only an attribute left
       if (attributes.length == 1) {
         val attrIndex = attributes.head._2
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.sort()
 
         if (attributes.head._1 == Format.Categorical) {
           return Success(CondNode(
@@ -79,13 +77,14 @@ class C45() extends C45Alg {
       val dsEntropy = Calc.entropy(ds)
 
       val infoGainRatios: Seq[(Float, Condition[_ <: Float], Seq[Dataset[T]], Int)] = attributes.zipWithIndex.map { case ((format, attrIndex), index) =>
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.sort()
 
         if (attrValues.length == 1) (0.0f, CategoricalCondition(index, Nil), Nil, -1)
         else if (format == Format.Categorical) {
           def cond: Condition[Float] = CategoricalCondition(attrIndex, attrValues)
 
-          val branches = ds.groupBy(sample => sample(attrIndex)).values.toList
+          // [feat value, [samples]]
+          val branches = ds.groupBy(sample => sample(attrIndex)).toList.sortBy(_._1).map(_._2)
           (Calc.infoGainRatio(dsEntropy, branches, ds.length), cond, branches, index)
         } else { // continuous case
           val (cond, infoGainRatio, subDss) = bestContinuousSplitPoint(ds, dsEntropy, attrValues, attrIndex)
