@@ -1,9 +1,8 @@
 !data/.gitkeep
+
 data/*.csv
 data/*.pkl
 data/*.txt
-
-.tree
 
 # Created by https://www.toptal.com/developers/gitignore/api/intellij,scala,sbt,spark
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij,scala,sbt,spark
@@ -235,3 +234,5 @@ spark-warehouse/
 # End of https://www.toptal.com/developers/gitignore/api/intellij,scala,sbt,spark
 
 .bsp
+
+!data/*.log

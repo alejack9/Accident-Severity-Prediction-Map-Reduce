@@ -1,0 +1,12 @@
+Computation mode: seq
+{  trainTime: 3103.6296662, testTime: 0.1308376, score: 0.9017094}
+Computation mode: par
+{  trainTime: 887.0562501, testTime: 0.1106317, score: 0.9023199}
+
+
+===========10/25 - 02:20seq:
+
+par:
+
+
+
