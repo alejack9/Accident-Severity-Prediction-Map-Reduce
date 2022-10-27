@@ -2,7 +2,6 @@
 
 data/*.csv
 data/*.pkl
-data/*.txt
 
 # Created by https://www.toptal.com/developers/gitignore/api/intellij,scala,sbt,spark
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij,scala,sbt,spark
@@ -132,7 +131,7 @@ project/plugins/project/
 
 ### Scala ###
 *.class
-*.log
+# *.log
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -188,7 +187,7 @@ sql/docs
 sql/site
 lint-r-report.log
 log/
-logs/
+# logs/
 project/build/target/
 project/plugins/lib_managed/
 project/plugins/project/build.properties
@@ -234,5 +233,3 @@ spark-warehouse/
 # End of https://www.toptal.com/developers/gitignore/api/intellij,scala,sbt,spark
 
 .bsp
-
-!data/*.log

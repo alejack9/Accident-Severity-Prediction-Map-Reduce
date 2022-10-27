@@ -86,10 +86,7 @@ object Main {
       ", score: " + score +
       "}")
 
-    val outPath = trainDSPath.split("\\" + File.separator).init.mkString(File.separator)
-    val outFilename = trainDSPath.split("\\" + File.separator).last + ".tree"
-
-    TreeSaver.save(tree, outPath + File.separator + outFilename)
+    TreeSaver.save(tree, trainDSPath + ".tree")
 
 //    val sc = ContextFactory.getContext()
 //
