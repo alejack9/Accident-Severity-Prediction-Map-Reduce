@@ -1,11 +1,11 @@
-package it.unibo.scalable.ml.dt.sequential
+package it.unibo.scalable.ml.dt.base
 
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils.Format
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class C45Test extends AnyFunSuite {
+class C45SeqTest extends AnyFunSuite {
   val D: Seq[Seq[Float]] = List(
     Seq(3, 3, 5, 0),
     Seq(1, 1, 7, 0),

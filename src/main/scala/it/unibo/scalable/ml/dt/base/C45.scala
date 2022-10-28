@@ -1,35 +1,40 @@
-package it.unibo.scalable.ml.dt.par
+package it.unibo.scalable.ml.dt.base
 
-import it.unibo.scalable.ml.dt.Utils.Format
+import it.unibo.scalable.ml.dt.Utils.{Format, GenSeqSort}
 import it.unibo.scalable.ml.dt.Utils.Format.Format
 import it.unibo.scalable.ml.dt.Utils.Types.{Attribute, Dataset}
-import it.unibo.scalable.ml.dt.{C45Alg, Calc, CategoricalCondition, CondNode, Condition, ContinuousCondition, Leaf, LeafFactory, Tree}
+import it.unibo.scalable.ml.dt.{Tree, _}
 
+import scala.collection.{GenSeq, SortedMap}
+import scala.collection.parallel.ParSeq
 import scala.util.{Failure, Success, Try}
 
 class C45() extends C45Alg {
 
-  private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: Seq[Float], attrIndex: Int)
+  private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: GenSeq[Float], attrIndex: Int)
   : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
-    // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
-    val midPoints = attrValues.sorted.init.zip(attrValues.sorted.tail).map { case (a, b) => (a + b) / 2.0 }
+      // https://stackoverflow.com/a/23847107 : best way to sort the array if par -> convert parseq to seq an then back to parseq
+      // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
 
-    val bestSplitPoint = midPoints.map(midpoint => {
-      val partitions = ds.partition(row => row(attrIndex) < midpoint)
-      val partList = List(partitions._1, partitions._2)
-      (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
-    }).maxBy(_._2)
+      val attrValuesSorted = attrValues.sort()
+      val midPoints = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) => (a + b) / 2.0f }
 
-    (ContinuousCondition(attrIndex, bestSplitPoint._1.toFloat), bestSplitPoint._2, bestSplitPoint._3)
+      val bestSplitPoint = midPoints.map(midpoint => {
+        val partitions = ds.partition(row => row(attrIndex) < midpoint)
+        val partList = List(partitions._1, partitions._2)
+        (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
+      }).maxBy(_._2)
+
+      (ContinuousCondition(attrIndex, bestSplitPoint._1), bestSplitPoint._2, bestSplitPoint._3)
   }
 
   // the last value of each sample represents the class target
   override def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
 
     def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[Float]] = try {
-      //        println("|ds| : " + ds.length)
-      //        println("|attrs| : " + attributes.length)
-      //        println("Depth: " + depth)
+//              println("|ds| : " + ds.length)
+//              println("|attrs| : " + attributes.length)
+//              println("Depth: " + depth)
 
       if (ds.length == 1) return Success(Leaf(ds.head.last))
 
@@ -41,7 +46,7 @@ class C45() extends C45Alg {
       // only an attribute left
       if (attributes.length == 1) {
         val attrIndex = attributes.head._2
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct.seq
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.sort()
 
         if (attributes.head._1 == Format.Categorical) {
           return Success(CondNode(
@@ -72,13 +77,14 @@ class C45() extends C45Alg {
       val dsEntropy = Calc.entropy(ds)
 
       val infoGainRatios: Seq[(Float, Condition[_ <: Float], Seq[Dataset[T]], Int)] = attributes.zipWithIndex.map { case ((format, attrIndex), index) =>
-        val attrValues = ds.map(sample => sample(attrIndex)).distinct.seq
+        val attrValues = ds.map(sample => sample(attrIndex)).distinct.sort()
 
         if (attrValues.length == 1) (0.0f, CategoricalCondition(index, Nil), Nil, -1)
         else if (format == Format.Categorical) {
           def cond: Condition[Float] = CategoricalCondition(attrIndex, attrValues)
 
-          val branches = ds.groupBy(sample => sample(attrIndex)).values.toList
+          // [feat value, [samples]]
+          val branches = ds.groupBy(sample => sample(attrIndex)).toList.sortBy(_._1).map(_._2)
           (Calc.infoGainRatio(dsEntropy, branches, ds.length), cond, branches, index)
         } else { // continuous case
           val (cond, infoGainRatio, subDss) = bestContinuousSplitPoint(ds, dsEntropy, attrValues, attrIndex)
@@ -113,7 +119,7 @@ class C45() extends C45Alg {
         Failure(e)
     }
 
-    _train(ds.par, attributeTypes.zipWithIndex, 0) match {
+    _train(ds, attributeTypes.zipWithIndex, 0) match {
       case Success(toRet) => toRet
       case Failure(e) => throw e
     }

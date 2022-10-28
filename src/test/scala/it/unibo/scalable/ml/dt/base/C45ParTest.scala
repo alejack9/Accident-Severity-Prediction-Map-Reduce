@@ -1,11 +1,11 @@
-package it.unibo.scalable.ml.dt.par
+package it.unibo.scalable.ml.dt.base
 
-import org.scalatest.funsuite.AnyFunSuite
-import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils.Format
 import it.unibo.scalable.ml.dt.Utils.Types.Dataset
+import it.unibo.scalable.ml.dt._
+import org.scalatest.funsuite.AnyFunSuite
 
-class C45Test extends AnyFunSuite {
+class C45ParTest extends AnyFunSuite {
   val D: Dataset[Seq[Float]] = Vector(
     Seq(3, 3, 5, 0),
     Seq(1, 1, 7, 0),
@@ -14,7 +14,7 @@ class C45Test extends AnyFunSuite {
     Seq(7, 1, 3, 2)
   ).map(_.map(_.toFloat)).par
 
-  val dtc = new sequential.C45
+  val dtc = new base.C45
 
 //  private def printDs(): Unit = {
 //    println("________Dataset_______")

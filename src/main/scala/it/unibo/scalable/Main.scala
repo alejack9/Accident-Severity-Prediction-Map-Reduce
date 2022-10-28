@@ -2,7 +2,6 @@ package it.unibo.scalable
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import java.io.File
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils._
 
@@ -68,7 +67,7 @@ object Main {
 
     println("Computation mode: " + args(2))
 
-    val c45 : C45Alg = new sequential.C45
+    val c45 : C45Alg = new base.C45
 
     var t1 = System.nanoTime
     val tree = c45.train(input, featFormats) //.show
