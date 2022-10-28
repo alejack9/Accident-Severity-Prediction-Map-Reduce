@@ -2,7 +2,7 @@
 $date = Get-Date -Format "yy-MM-dd HH:mm:ss"
 
 $dataPath = "./data"
-[String[]]$nums = "1024", "2048", "4096", "8192"
+[String[]]$nums = "1024", "2048", "4096", "8192", "16384"
 
 foreach ($num in $nums) {
     $train_input = "$dataPath/input_train_$num.csv"
