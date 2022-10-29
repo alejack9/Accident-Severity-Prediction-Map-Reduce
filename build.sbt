@@ -9,9 +9,9 @@ ThisBuild / assemblyMergeStrategy := {
 }
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
-//libraryDependencies += "org.apache.spark" %% "spark-core" % "3.1.2"
-//libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.2.1"
-//libraryDependencies += "org.apache.spark" %% "spark-mllib" % "3.2.1"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "3.1.2"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.2.1"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "3.2.1"
 //libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % Test
 
