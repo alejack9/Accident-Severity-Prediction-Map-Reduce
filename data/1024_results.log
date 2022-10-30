@@ -10,3 +10,11 @@ par:
 
 
 
+Computation mode: seq
+{  trainTime: 117.9662846, testTime: 0.0528062, score: 1.0}
+Computation mode: par
+{  trainTime: 170.808125, testTime: 0.1085553, score: 1.0}
+
+===========10/26 - 22:57seq:
+par:
+
