@@ -33,6 +33,7 @@ class C45 {
       .mapValues(_ => 1L)
       .reduceByKey(_+_)
 
+    val mapComputationInput: RDD[((Int, Float), (Float, Long, Long))] = reduceAttributeRes.join(reducePopulationRes).mapValues{case ((c, cnt), all) => (c, cnt, all)}
 
   }
 }
