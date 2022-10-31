@@ -14,38 +14,27 @@ object Types {
 
 class C45 {
   //                     j , a_j       c     cnt   all
-  def entropy(in: RDD[((Int, Float), (Float, Long, Long))]): Float = {
+  def calcEntropy(in: RDD[((Int, Float), (Float, Long, Long))]): Float = {
     val classesCounts = in
-      .map {case ((j, aj), (c, cnt, all)) => ((j, c), cnt)}
+      .map {case ((j, _), (c, cnt, _)) => ((j, c), cnt)}
       .reduceByKey(_ + _)
       .map {case ((j, c), classCount) => (j, (c, classCount))} // for each j feat, the count of each class
       .groupByKey
       .take(1)
       .head
+      ._2
 
-    val dsLength = classesCounts._2.aggregate(0L)(_+_._2, _+_)
+    val dsLength = classesCounts.aggregate(0L)(_+_._2, _+_)
 
-    println("( " + classesCounts._1 + " , " + classesCounts._2.mkString("(", ", ", ")") + ")")
+    println(classesCounts.mkString("(", ", ", ")") + ")")
     println(f"dsLength: $dsLength")
 
-    // dsLength
-    // per ogni classe c -> cnt c
-//    val dsLength: Long = in.map{case ((j, _), (_, _, all)) => (j, all) }
-//      .reduceByKey(_+_)
-//      .take(1)
-//      .head._2
-
-//    in.map { case (_, (c, cnt, all)) => (c, cnt)}
-//      .reduceByKey(_+_)
-//      .mapValues { case(cnt, all) => (cnt / all) * math.log(cnt / all) }
-////    in.map {case ((),(c, cnt, all)) = cnt/all}
-    0f
+    - classesCounts.map(_._2).map(_ / dsLength.toFloat).map(p => p * math.log(p)).sum.toFloat
   }
-
-
 
   def run(D: Dataset): Unit = {
     val dsLength = D.count()
+
     // 1st map-reduce: DATA PREPARATION (one time)
     // Extract attribute index, attribute value and class label from instance of the record
     // out ((j, a_j), (sample_id, c))
@@ -88,7 +77,29 @@ class C45 {
     println("====== Map Computation Input ======")
     println(mapComputationInput.collect.mkString("(", ", ", ")\r\n"))
 
-    entropy(mapComputationInput)
-//    val mapComputationRes = mapComputationInput.
+    val entropy = calcEntropy(mapComputationInput)
+    println("====== Entropy ======")
+    println(entropy)
+
+    val mapComputationInputWithPartEntropy = mapComputationInput
+      .mapValues{case (c, cnt, all) =>
+        (c, cnt, all, (cnt / all.toFloat * math.log(cnt / all.toFloat)).toFloat)}
+
+    val attributesEntropy = mapComputationInputWithPartEntropy
+      .aggregateByKey(0f)({case (a,(_, _, _, part)) => a + part}, _+_)
+
+    val mapComputationInputWithEntropy = mapComputationInputWithPartEntropy
+      .join(attributesEntropy)
+      .map{case (k, ((c, cnt, all, _), entropy)) => (k, (c, cnt, all, entropy))}
+      .mapValues(t => (t._3, t._4))
+      .reduceByKey{case ((all, ent1),(_, ent2)) => (all, ent1 + ent2)}
+      .mapValues(t => (t._1, -t._2))
+
+    val mapComputationInputWithInfo = mapComputationInputWithEntropy
+      .mapValues{case (all, entropy) => all / dsLength.toFloat * entropy}
+
+    println("====== Map Computation Input With Info ======")
+    println(mapComputationInputWithInfo.collect.mkString("(", ", ", ")\r\n"))
+    System.in.read
   }
 }
