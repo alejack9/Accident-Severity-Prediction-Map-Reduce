@@ -95,11 +95,15 @@ class C45 {
       .reduceByKey{case ((all, ent1),(_, ent2)) => (all, ent1 + ent2)}
       .mapValues(t => (t._1, -t._2))
 
-    val mapComputationInputWithInfo = mapComputationInputWithEntropy
-      .mapValues{case (all, entropy) => all / dsLength.toFloat * entropy}
+    val mapComputationInputWithInfoAndSplitInfo = mapComputationInputWithEntropy
+      .mapValues{case (all, entropy) =>
+        (all / dsLength.toFloat * entropy, all / dsLength.toFloat * math.log(all / dsLength.toFloat))}
 
-    println("====== Map Computation Input With Info ======")
-    println(mapComputationInputWithInfo.collect.mkString("(", ", ", ")\r\n"))
+    println("====== Map Computation Input With Info And SplitInfo ======")
+    println(mapComputationInputWithInfoAndSplitInfo.collect.mkString("(", ", ", ")\r\n"))
+
+
+
     System.in.read
   }
 }
