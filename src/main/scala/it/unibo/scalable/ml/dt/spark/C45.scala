@@ -97,17 +97,15 @@ class C45 {
       .mapValues(t => (t._1, -t._2))
 
     // ((j, aj), (all, entropy))
-    // all: numero di istanze che hanno valore aj per attributo j
-    // entropy->  entropia del subset con istanze che hanno valore aj per feature j
+    // all: amount of instances with j = aj
+    // entropy->  entropy of subset of instances with j = aj
     val mapComputationInputWithInfoAndSplitInfo = mapComputationInputWithEntropy
       .mapValues { case (all, entropy) =>
         (all / dsLength.toFloat * entropy, - all / dsLength.toFloat * math.log(all / dsLength.toFloat))
       }
 
-
-    // abbiamo ((j, aj), (info(j, aj), splitinfo(j, aj))
-    // Gain(a, T) = Entropia dataset - Info(a, T)
-
+    // input: ((j, aj), (info(j, aj), splitinfo(j, aj))
+    // Gain(a, T) = Dataset entropy - Info(a, T)
     val reduceComputationWithInfoAndSplitInfoForJ = mapComputationInputWithInfoAndSplitInfo
       .map { case ((j, aj), (info, splitInfo)) => (j, (info, splitInfo)) }
       .foldByKey((0f, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2)
@@ -115,9 +113,12 @@ class C45 {
 
     val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ.mapValues{case (info, splitInfo) => (entropy - info)/ splitInfo}
 
+    val bestAttribute = mapComputationWithGainRatio.reduce((res1, res2) => if (res1._1 > res2._1) res1 else res2)
+
     println("====== Reduce Computation Info And Split Info For J ======")
     println(mapComputationInputWithInfoAndSplitInfo.collect.mkString("(", ", ", ")\r\n"))
     println(reduceComputationWithInfoAndSplitInfoForJ.collect.mkString("(", ", ", ")\r\n"))
     println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
+    println(bestAttribute)
   }
 }
