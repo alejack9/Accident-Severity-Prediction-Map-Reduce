@@ -54,10 +54,10 @@ class C45 {
 
     // Reduce attribute
     val reduceAttributeRes: RDD[((Int, Float), (Float, Long))] = mapAttributeRes
-      .map{ case ((j, aj), (sample_id, c)) => ((j, aj, c), sample_id) }
+      .map { case ((j, aj), (sample_id, c)) => ((j, aj, c), sample_id) }
       .mapValues(_ => 1L)
-      .reduceByKey(_+_)
-      .map{ case ((j, aj, c), cnt) => ((j, aj), (c, cnt))}
+      .reduceByKey(_ + _)
+      .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
 
     println("====== Reduce Attribute Res ======")
     println(reduceAttributeRes.collect.mkString("(", ", ", ")\r\n"))
@@ -65,14 +65,14 @@ class C45 {
     // attribute selection
     val reducePopulationRes: RDD[((Int, Float), Long)] = reduceAttributeRes
       .mapValues(_ => 1L)
-      .reduceByKey(_+_)
+      .reduceByKey(_ + _)
 
     println("====== Reduce Population Res ======")
     println(reducePopulationRes.collect.mkString("(", ", ", ")\r\n"))
 
     val mapComputationInput: RDD[((Int, Float), (Float, Long, Long))] = reduceAttributeRes
       .join(reducePopulationRes)
-      .mapValues {case ((c, cnt), all) => (c, cnt, all)}
+      .mapValues { case ((c, cnt), all) => (c, cnt, all) }
 
     println("====== Map Computation Input ======")
     println(mapComputationInput.collect.mkString("(", ", ", ")\r\n"))
@@ -82,28 +82,42 @@ class C45 {
     println(entropy)
 
     val mapComputationInputWithPartEntropy = mapComputationInput
-      .mapValues{case (c, cnt, all) =>
-        (c, cnt, all, (cnt / all.toFloat * math.log(cnt / all.toFloat)).toFloat)}
+      .mapValues { case (c, cnt, all) =>
+        (c, cnt, all, (cnt / all.toFloat * math.log(cnt / all.toFloat)).toFloat)
+      }
 
     val attributesEntropy = mapComputationInputWithPartEntropy
-      .aggregateByKey(0f)({case (a,(_, _, _, part)) => a + part}, _+_)
+      .aggregateByKey(0f)({ case (a, (_, _, _, part)) => a + part }, _ + _)
 
     val mapComputationInputWithEntropy = mapComputationInputWithPartEntropy
       .join(attributesEntropy)
-      .map{case (k, ((c, cnt, all, _), entropy)) => (k, (c, cnt, all, entropy))}
+      .map { case (k, ((c, cnt, all, _), entropy)) => (k, (c, cnt, all, entropy)) }
       .mapValues(t => (t._3, t._4))
-      .reduceByKey{case ((all, ent1),(_, ent2)) => (all, ent1 + ent2)}
+      .reduceByKey { case ((all, ent1), (_, ent2)) => (all, ent1 + ent2) }
       .mapValues(t => (t._1, -t._2))
 
+    // ((j, aj), (all, entropy))
+    // all: numero di istanze che hanno valore aj per attributo j
+    // entropy->  entropia del subset con istanze che hanno valore aj per feature j
     val mapComputationInputWithInfoAndSplitInfo = mapComputationInputWithEntropy
-      .mapValues{case (all, entropy) =>
-        (all / dsLength.toFloat * entropy, all / dsLength.toFloat * math.log(all / dsLength.toFloat))}
+      .mapValues { case (all, entropy) =>
+        (all / dsLength.toFloat * entropy, - all / dsLength.toFloat * math.log(all / dsLength.toFloat))
+      }
 
-    println("====== Map Computation Input With Info And SplitInfo ======")
+
+    // abbiamo ((j, aj), (info(j, aj), splitinfo(j, aj))
+    // Gain(a, T) = Entropia dataset - Info(a, T)
+
+    val reduceComputationWithInfoAndSplitInfoForJ = mapComputationInputWithInfoAndSplitInfo
+      .map { case ((j, aj), (info, splitInfo)) => (j, (info, splitInfo)) }
+      .foldByKey((0f, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2)
+       )
+
+    val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ.mapValues{case (info, splitInfo) => (entropy - info)/ splitInfo}
+
+    println("====== Reduce Computation Info And Split Info For J ======")
     println(mapComputationInputWithInfoAndSplitInfo.collect.mkString("(", ", ", ")\r\n"))
-
-
-
-    System.in.read
+    println(reduceComputationWithInfoAndSplitInfoForJ.collect.mkString("(", ", ", ")\r\n"))
+    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
   }
 }
