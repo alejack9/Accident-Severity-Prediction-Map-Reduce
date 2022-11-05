@@ -94,6 +94,9 @@ class C45() extends C45Alg {
 
       if (infoGainRatios.forall(_._1 == 0.0f)) return Success(LeafFactory.get(ds))
 
+      print(infoGainRatios.mkString(","))
+      System.exit(1)
+      
       val maxGainRatio = infoGainRatios.maxBy(_._1)
 
       Success(CondNode(

@@ -81,20 +81,36 @@ class C45 {
     println("====== Entropy ======")
     println(entropy)
 
-    val mapComputationInputWithPartEntropy = mapComputationInput
+//  TODO: CAPIRE SE E` GIUSTO QUESTO O IL CODICE VECCHIO
+//        VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
+    // Entropy(S_v)
+    // ((j, aj1), (1, ...)), ((j, aj2), (1, ...)), ((j, aj), (2, ...))
+//    val mapComputationInputWithPartEntropy = mapComputationInput
+    val mapComputationInputWithEntropy = mapComputationInput
       .mapValues { case (c, cnt, all) =>
-        (c, cnt, all, (cnt / all.toFloat * math.log(cnt / all.toFloat)).toFloat)
-      }
+        (c, cnt, all, (cnt / all.toFloat * math.log(cnt / all.toFloat)).toFloat) }
+      .aggregateByKey((0L, 0f))({ case (acc, (_, _, all, part)) => (all, acc._2 + part) }, { case ((all, p1), (_, p2)) => (all, p1 + p2) })
 
-    val attributesEntropy = mapComputationInputWithPartEntropy
-      .aggregateByKey(0f)({ case (a, (_, _, _, part)) => a + part }, _ + _)
+//    val attributesEntropy = mapComputationInputWithPartEntropy
+//      .aggregateByKey(0f)({ case (acc, (_, _, _, part)) => acc + part }, _ + _)
 
-    val mapComputationInputWithEntropy = mapComputationInputWithPartEntropy
-      .join(attributesEntropy)
-      .map { case (k, ((c, cnt, all, _), entropy)) => (k, (c, cnt, all, entropy)) }
-      .mapValues(t => (t._3, t._4))
-      .reduceByKey { case ((all, ent1), (_, ent2)) => (all, ent1 + ent2) }
-      .mapValues(t => (t._1, -t._2))
+//    println("-------------- Attributes Entropy ------------")
+//    println(attributesEntropy.collect.mkString("(", ", ", ")\r\n"))
+
+//    val mapComputationInputWithEntropy = attributesEntropy
+//      .join(mapComputationInputWithPartEntropy)
+//      .map { case (k, (entropy, (c, cnt, all, _))) => (k, (c, cnt, all, entropy)) }
+//      .mapValues(t => (t._3, t._4))
+////      .reduceByKey { case ((all, ent1), (_, ent2)) => (all, ent1 + ent2) }
+//      .mapValues(t => (t._1, -t._2))
+
+//        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    println("========== mapComputationInputWithEntropy ==========")
+    println(mapComputationInputWithEntropy.collect.mkString("(", ", ", ")\r\n"))
+
+//    System.exit(-1)
 
     // ((j, aj), (all, entropy))
     // all: amount of instances with j = aj
@@ -107,13 +123,19 @@ class C45 {
     // input: ((j, aj), (info(j, aj), splitinfo(j, aj))
     // Gain(a, T) = Dataset entropy - Info(a, T)
     val reduceComputationWithInfoAndSplitInfoForJ = mapComputationInputWithInfoAndSplitInfo
-      .map { case ((j, aj), (info, splitInfo)) => (j, (info, splitInfo)) }
-      .foldByKey((0f, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2)
-       )
+      .map { case ((j, _), (info, splitInfo)) => (j, (info, splitInfo)) }
+      .foldByKey((0, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2))
 
-    val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ.mapValues{case (info, splitInfo) => (entropy - info)/ splitInfo}
+    println("====== reduceComputationWithInfoAndSplitInfoForJ ======")
+    println(reduceComputationWithInfoAndSplitInfoForJ.collect.mkString("(", ", ", ")\r\n"))
 
-    val bestAttribute = mapComputationWithGainRatio.reduce((res1, res2) => if (res1._1 > res2._1) res1 else res2)
+    val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ.mapValues{ case (info, splitInfo) => (entropy - info) / splitInfo }
+
+    println("====== mapComputationWithGainRatio ======")
+    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
+
+
+    val bestAttribute = mapComputationWithGainRatio.reduce((res1, res2) => if (res1._2 > res2._2) res1 else res2)
 
     println("====== Reduce Computation Info And Split Info For J ======")
     println(mapComputationInputWithInfoAndSplitInfo.collect.mkString("(", ", ", ")\r\n"))
