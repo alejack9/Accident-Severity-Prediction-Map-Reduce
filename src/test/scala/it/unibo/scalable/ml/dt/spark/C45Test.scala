@@ -6,7 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class C45Test extends AnyFunSuite {
   val n_threads = "*"
   val conf: SparkConf = new SparkConf().setAppName("Accident-Severity-Prediction").setMaster("local[" + n_threads + "]").set("spark.driver.maxResultSize", "0")
-  val sc = new SparkContext(conf)
+  val sc = ContextFactory.getContext(LogLevel.OFF)
 //  val D: Types.Dataset = sc.parallelize(List(Array(1,1,10),Array(10,1,1),Array(8,1,13),Array(2,1,1),Array(5,1,1),Array(5,1,1),Array(1,1,2))).map(_.map(_.toFloat).toSeq)
   val D: Types.Dataset = sc.parallelize(List(
     Seq(3, 3, 5, 0),

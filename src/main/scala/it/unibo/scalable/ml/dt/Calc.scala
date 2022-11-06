@@ -1,5 +1,6 @@
 package it.unibo.scalable.ml.dt
 
+import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.Utils.Types.Dataset
 
 object Calc {
@@ -10,7 +11,7 @@ object Calc {
     // - sommatoria per ogni classe p(classe) * log (p)
     -targets.map(target => {
       val p = ds.count(_.last == target) / ds.length.toFloat
-      p * math.log(p)
+      p * MathExtension.log2(p)
     }).sum.toFloat
   }
 
@@ -26,10 +27,10 @@ object Calc {
   //    same as information
     -subsets.map(subset => {
       val p = subset.length / dsLength.toFloat
-      p * math.log(p)
+      p * MathExtension.log2(p)
     }).sum.toFloat
 
-  def splitInformation(subProbabilities: Seq[Float]): Float = -subProbabilities.map(p => p * math.log(p)).sum.toFloat
+  def splitInformation(subProbabilities: Seq[Float]): Float = -subProbabilities.map(p => p * MathExtension.log2(p)).sum.toFloat
 
   def infoGainRatio[T <: Seq[Float]](dsEntropy: Float, subSets: Seq[Dataset[T]], dsLength: Long): Float = {
     val subProbs = subSets.map(subset => subset.length / dsLength.toFloat)
