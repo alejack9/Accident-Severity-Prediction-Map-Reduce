@@ -43,44 +43,37 @@ class C45SeqTest extends AnyFunSuite {
     val t = dtc.train(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Continuous))
     assert(t == CondNode(ContinuousCondition(0, 5.0), List(
       CondNode(ContinuousCondition(0, 2.0), List(
-        CondNode(ContinuousCondition(1, 5.5), List(
           CondNode(ContinuousCondition(1, 1.5), List(
             Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
-        Leaf(0.0))),
-      Leaf(2.0)
-    )).asInstanceOf[Tree[Float]])
-  }
-
-  test("a0 a1 | mixed") {
-    val t = dtc.train(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Categorical))
-    assert (t == CondNode(ContinuousCondition(0, 5.0), List(
-        CondNode(ContinuousCondition(0, 2.0), List(
-          CondNode(CategoricalCondition(1, List(1.0, 2.0, 9.0)), List(
-            Leaf(0.0),Leaf(2.0),Leaf(2.0))),
           Leaf(0.0))),
         Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
+  test("a0 a1 | mixed") {
+    val t = dtc.train(D.map(sample => List(sample.head, sample(1), sample.last)), List(Format.Continuous, Format.Categorical))
+    assert (t == CondNode(CategoricalCondition(1, List(1.0, 2.0, 3.0, 9.0)), List(
+      CondNode(ContinuousCondition(0, 4.0),
+            List(Leaf(0.0),Leaf(2.0))),Leaf(2.0),
+          Leaf(0.0),
+        Leaf(2.0))
+    ).asInstanceOf[Tree[Float]])
+  }
+
   test("all ds | continuous") {
     val t = dtc.train(D, List(Format.Continuous, Format.Continuous, Format.Continuous))
-    assert(t == CondNode(ContinuousCondition(0, 5.0), List(
-      CondNode(ContinuousCondition(0, 2.0), List(
-        CondNode(ContinuousCondition(1, 5.5), List(
-          CondNode(ContinuousCondition(1, 1.5), List(
+    assert(t == CondNode(ContinuousCondition(2, 9.0), List(
+      CondNode(ContinuousCondition(0, 5.0), List(
             Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
-        Leaf(0.0))),
-      Leaf(2.0)
-    )).asInstanceOf[Tree[Float]])
+          Leaf(2.0))
+    ).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | categorical") {
     val t = dtc.train(D, List(Format.Categorical, Format.Categorical, Format.Categorical))
-    assert(t == CondNode(CategoricalCondition(0, List(1.0, 3.0, 7.0)), List(
-      CondNode(CategoricalCondition(2, List(7.0, 11.0)), List(
-        Leaf(0.0), Leaf(2.0))),
+    assert(t == CondNode(CategoricalCondition(2, List(3.0, 5.0, 7.0, 11.0)), List(
+      Leaf(2.0),
+      Leaf(0.0),
       Leaf(0.0),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
@@ -88,20 +81,18 @@ class C45SeqTest extends AnyFunSuite {
 
   test("all ds | mixed") {
     val t = dtc.train(D, List(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t == CondNode(ContinuousCondition(1, 6.0), List(
-      CondNode(ContinuousCondition(1, 2.5), List(
-        CondNode(CategoricalCondition(0, List(1.0, 7.0)), List(
-          CondNode(ContinuousCondition(1, 1.5), List(
-            Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
-        Leaf(0.0))),
+    assert(t == CondNode(CategoricalCondition(2, List(3.0, 5.0, 7.0, 11.0)), List(
+      Leaf(2.0),
+      Leaf(0.0),
+      Leaf(0.0),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
   test("toString") {
     val t = dtc.train(D, List(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:[CondNode(cond:(feat 1 < 2.5),children:[CondNode(cond:(feat 0 [ 1.0 , 7.0 ]),children:[CondNode(cond:(feat 1 < 1.5),children:[Leaf(0.0), Leaf(2.0)]), Leaf(2.0)]), Leaf(0.0)]), Leaf(2.0)])"))
+    println(t)
+    assert(t.toString.equals("CondNode(cond:(feat 2 [ 3.0 , 5.0 , 7.0 , 11.0 ]),children:[Leaf(2.0), Leaf(0.0), Leaf(0.0), Leaf(2.0)])"))
   }
 }
 
