@@ -44,10 +44,8 @@ class C45ParTest extends AnyFunSuite {
     val t = dtc.train(D.map(sample => Vector(sample.head, sample(1), sample.last)), Vector(Format.Continuous, Format.Continuous))
     assert(t == CondNode(ContinuousCondition(0, 5.0), Vector(
       CondNode(ContinuousCondition(0, 2.0), Vector(
-        CondNode(ContinuousCondition(1, 5.5), Vector(
-          CondNode(ContinuousCondition(1, 1.5), Vector(
-            Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
+        CondNode(ContinuousCondition(1, 1.5), Vector(
+          Leaf(0.0), Leaf(2.0))),
         Leaf(0.0))),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
@@ -55,33 +53,28 @@ class C45ParTest extends AnyFunSuite {
 
   test("a0 a1 | mixed") {
     val t = dtc.train(D.map(sample => Vector(sample.head, sample(1), sample.last)), Vector(Format.Continuous, Format.Categorical))
-    assert(t == CondNode(ContinuousCondition(0, 5.0), Vector(
-      CondNode(ContinuousCondition(0, 2.0), Vector(
-        CondNode(CategoricalCondition(1, Vector(1.0, 2.0, 9.0)), Vector(
-          Leaf(0.0), Leaf(2.0), Leaf(2.0))),
-        Leaf(0.0))),
-      Leaf(2.0)
-    )).asInstanceOf[Tree[Float]])
+    assert (t == CondNode(CategoricalCondition(1, Vector(1.0, 2.0, 3.0, 9.0)), Vector(
+      CondNode(ContinuousCondition(0, 4.0),
+        Vector(Leaf(0.0),Leaf(2.0))),Leaf(2.0),
+      Leaf(0.0),
+      Leaf(2.0))
+    ).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | continuous") {
     val t = dtc.train(D, Vector(Format.Continuous, Format.Continuous, Format.Continuous))
-    assert(t == CondNode(ContinuousCondition(0, 5.0), Vector(
-      CondNode(ContinuousCondition(0, 2.0), Vector(
-        CondNode(ContinuousCondition(1, 5.5), Vector(
-          CondNode(ContinuousCondition(1, 1.5), Vector(
-            Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
-        Leaf(0.0))),
-      Leaf(2.0)
-    )).asInstanceOf[Tree[Float]])
+    assert(t == CondNode(ContinuousCondition(2, 9.0), Vector(
+      CondNode(ContinuousCondition(0, 5.0), Vector(
+        Leaf(0.0), Leaf(2.0))),
+      Leaf(2.0))
+    ).asInstanceOf[Tree[Float]])
   }
 
   test("all ds | categorical") {
     val t = dtc.train(D, Vector(Format.Categorical, Format.Categorical, Format.Categorical))
-    assert(t == CondNode(CategoricalCondition(0, Vector(1.0, 3.0, 7.0)), Vector(
-      CondNode(CategoricalCondition(2, Vector(7.0, 11.0)), Vector(
-        Leaf(0.0), Leaf(2.0))),
+    assert(t == CondNode(CategoricalCondition(2, Vector(3.0, 5.0, 7.0, 11.0)), Vector(
+      Leaf(2.0),
+      Leaf(0.0),
       Leaf(0.0),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
@@ -89,20 +82,17 @@ class C45ParTest extends AnyFunSuite {
 
   test("all ds | mixed") {
     val t = dtc.train(D, Vector(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t == CondNode(ContinuousCondition(1, 6.0), Vector(
-      CondNode(ContinuousCondition(1, 2.5), Vector(
-        CondNode(CategoricalCondition(0, Vector(1.0, 7.0)), Vector(
-          CondNode(ContinuousCondition(1, 1.5), Vector(
-            Leaf(0.0), Leaf(2.0))),
-          Leaf(2.0))),
-        Leaf(0.0))),
+    assert(t == CondNode(CategoricalCondition(2, Vector(3.0, 5.0, 7.0, 11.0)), Vector(
+      Leaf(2.0),
+      Leaf(0.0),
+      Leaf(0.0),
       Leaf(2.0)
     )).asInstanceOf[Tree[Float]])
   }
 
   test("toString") {
     val t = dtc.train(D, Vector(Format.Categorical, Format.Continuous, Format.Categorical))
-    assert(t.toString.equals("CondNode(cond:(feat 1 < 6.0),children:[CondNode(cond:(feat 1 < 2.5),children:[CondNode(cond:(feat 0 [ 1.0 , 7.0 ]),children:[CondNode(cond:(feat 1 < 1.5),children:[Leaf(0.0), Leaf(2.0)]), Leaf(2.0)]), Leaf(0.0)]), Leaf(2.0)])"))
+    assert(t.toString.equals("CondNode(cond:(feat 2 [ 3.0 , 5.0 , 7.0 , 11.0 ]),children:[Leaf(2.0), Leaf(0.0), Leaf(0.0), Leaf(2.0)])"))
   }
 }
 
