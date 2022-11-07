@@ -17,10 +17,10 @@ object Calc {
 
   def information[T <: Seq[Float]](subSets: Seq[Dataset[T]], dsLength: Long): Float =
   //    we could call information calculating probabilities but we had to run map twice and seq != RDD
-    -subSets.map(subset => subset.length / dsLength.toFloat * entropy(subset)).sum
+    subSets.map(subset => subset.length / dsLength.toFloat * entropy(subset)).sum
 
   def information[T <: Seq[Float]](subProbabilities: Seq[Float], subSets: Seq[Dataset[T]]): Float =
-    -subProbabilities.zip(subSets).map { case (p, s) => p * entropy(s) }.sum
+    subProbabilities.zip(subSets).map { case (p, s) => p * entropy(s) }.sum
 
 
   def splitInformation[T <: Seq[Float]](subsets: Seq[Dataset[T]], dsLength: Long): Float =

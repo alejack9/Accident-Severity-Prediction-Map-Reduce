@@ -102,7 +102,7 @@ object Main {
       val c45 = new C45
       c45.run(dataset)
 
-      System.in.read()
+      //System.in.read()
 
     }
 
