@@ -88,7 +88,7 @@ object Main {
         ", score: " + score +
         "}")
 
-      TreeSaver.save(tree, trainDSPath + ".tree")
+      TreeSaver.save(tree, trainDSPath + "_" + args(2) + ".tree")
     } else {
       val sc = ContextFactory.getContext(LogLevel.OFF)
       val rdd = sc.textFile(trainDSPath)
