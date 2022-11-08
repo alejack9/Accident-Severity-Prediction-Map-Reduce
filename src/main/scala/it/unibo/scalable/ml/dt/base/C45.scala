@@ -55,7 +55,7 @@ class C45() extends C45Alg {
               _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth + 1) match {
                 case Success(value) => value
                 case Failure(_) =>
-                  // Stackoverflow error, leaf created instead
+                  // Stack overflow error, leaf created instead
                   LeafFactory.get(ds)
               }
             })
@@ -67,7 +67,7 @@ class C45() extends C45Alg {
           return Success(CondNode(cond, subDss.map(_train(_, attributes, depth + 1) match {
             case Success(value) => value
             case Failure(_) =>
-              // Stackoverflow error, leaf created instead
+              // Stack overflow error, leaf created instead
               LeafFactory.get(ds)
           })))
         }
@@ -109,7 +109,7 @@ class C45() extends C45Alg {
           ) match {
             case Success(value) => value
             case Failure(_) =>
-              // Stackoverflow error, leaf created instead
+              // Stack overflow error, leaf created instead
               LeafFactory.get(ds)
           })))
     } catch {
