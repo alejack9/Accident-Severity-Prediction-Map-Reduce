@@ -2,7 +2,7 @@
 $date = Get-Date -Format "yy-MM-dd HH:mm:ss"
 
 $dataPath = "./data"
-[String[]]$nums = "1024", "2048", "4096", "8192", "16384"
+[String[]]$nums = "1024", "2048", "4096", "8192", "16384", "32768", "65536", "131072", "262144", "524288", "1048576", "2097152"
 
 foreach ($num in $nums) {
     $train_input = "$dataPath/input_train_$num.csv"
@@ -18,7 +18,7 @@ foreach ($num in $nums) {
         $pinfo.UseShellExecute = $false
         $pinfo.Arguments = "-Xmx10G -Xss8G -jar ./target/scala-2.12/FinalProject-assembly-0.1.0-SNAPSHOT.jar $train_input $test_input $x"
 
-        "$date - Starting $x..." | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
+        "$date - Starting $x in $num..." | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
         $results = Invoke-Process $pinfo
 
         "--------------StdOut-----------------" | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
@@ -27,5 +27,7 @@ foreach ($num in $nums) {
         $results.StdErr | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
         "-------------ExitCode----------------" | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
         $results.ExitCode | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
+        
+        "$date - ... $x in $num - Done" | Tee-Object -Append "$dataPath/logs/${num}.log" | Write-Host
     }
 }
