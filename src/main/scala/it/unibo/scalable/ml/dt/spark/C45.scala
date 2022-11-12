@@ -13,7 +13,23 @@ object Types {
 // ##                    ##
 // ########################
 
-class C45 {
+class C45{
+
+  // return Tree Table
+  //   k     , v
+  // (NODE_ID, splitting_feat))
+  def train (D: Dataset): RDD[((Int, Float), (Float, Long, Long))] ={
+
+  }
+
+
+
+
+
+
+
+
+
   //                     j , a_j       c     cnt   all
   def calcEntropy(in: RDD[((Int, Float), (Float, Long, Long))]): Float = {
     val classesCounts = in
@@ -34,7 +50,7 @@ class C45 {
     - classesCounts.map(_._2).map(_ / dsLength.toFloat).map(p => p * MathExtension.log2(p)).sum.toFloat
   }
 
-  def run(D: Dataset): Unit = {
+  def getBestAttribute(D: Dataset): Unit = {
     val dsLength = D.count()
 
     // 1st map-reduce: DATA PREPARATION (one time)
