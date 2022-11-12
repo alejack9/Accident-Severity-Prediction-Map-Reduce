@@ -4,6 +4,8 @@ import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.spark.Types.Dataset
 import org.apache.spark.rdd.RDD
 
+import scala.collection.immutable.HashMap
+
 object Types {
   type Dataset = RDD[Seq[Float]]
 }
@@ -14,20 +16,48 @@ object Types {
 // ########################
 
 class C45{
+  
+  // tree data structure
+  // 01,32,2 -> linked X <= X è l'attribute index da aggiungere per ottenere il nuovo percorso
+  // 32,01,2 -> leaf X <= X è il valore della classe
 
-  // return Tree Table
-  //   k     , v
-  // (NODE_ID, splitting_feat))
-  def train (D: Dataset): RDD[((Int, Float), (Float, Long, Long))] ={
+  def train(D:Dataset): Map[String, Node]  = {
+    def _train(subSet: Dataset, previousPath: String, lastPath: String, table: Map[String, Node]): Map[String, Node] = {
+      println("PreviousPath: " + previousPath + lastPath)
+      println("==============Table=================")
+      println(table)
+      println("====================================")
+      println("==============Subset================")
+      println(subSet.collect.mkString("\r\n"))
+      println("====================================")
 
+//       if ds size 1 --> leaf
+//
+//       if no attributes --> leaf
+//
+//       if all samples belongs to the same class --> leaf
+
+      val bestAttrIndex = getBestAttribute(D)
+      val bestAttrValues = subSet.map(_(bestAttrIndex)).distinct.collect
+
+      val toRet: Map[String, Node] = bestAttrValues
+        .map(value => {
+          val currentPath = "|" + bestAttrIndex.toString + "," + value.toString
+          val mapValue = if (lastPath == currentPath) Leaf(getClass(subSet)) else Link(bestAttrIndex)
+
+          _train(
+            subSet.filter(_ (bestAttrIndex) == value),
+            previousPath + lastPath,
+            currentPath,
+            table + (previousPath + lastPath + currentPath -> mapValue)
+          )
+        })
+        .reduce(_++_)
+
+      toRet
+    }
+    _train(D, "", "", HashMap.empty)
   }
-
-
-
-
-
-
-
 
 
   //                     j , a_j       c     cnt   all
@@ -43,17 +73,27 @@ class C45{
 
     val dsLength = classesCounts.aggregate(0L)(_+_._2, _+_)
 
-    println("====== Classes Counts ======")
-    println(classesCounts.mkString("(", ", ", ")") + ")")
-    println(f"dsLength: $dsLength")
+//    println("====== Classes Counts ======")
+//    println(classesCounts.mkString("(", ", ", ")") + ")")
+//    println(f"dsLength: $dsLength")
 
     - classesCounts.map(_._2).map(_ / dsLength.toFloat).map(p => p * MathExtension.log2(p)).sum.toFloat
   }
 
-  def getBestAttribute(D: Dataset): Unit = {
+  def getClass(D: Dataset): Float = {
+    // take the class with most occurrences
+    D.map(_.last).countByValue().maxBy(_._2)._1
+  }
+
+  def getBestAttribute(D: Dataset): Int = {
+//      __   QUA(ck)
+//    <(o ) ___
+//      ( . > /
+//       `---'
+
     val dsLength = D.count()
 
-    // 1st map-reduce: DATA PREPARATION (one time)
+    // 1st map-reduce: DATA PREPARATION (one time task)
     // Extract attribute index, attribute value and class label from instance of the record
     // out ((j, a_j), (sample_id, c))
 
@@ -67,8 +107,8 @@ class C45{
           )
       }
 
-    println("====== Map Attribute Res ======")
-    println(mapAttributeRes.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== Map Attribute Res ======")
+//    println(mapAttributeRes.collect.mkString("(", ", ", ")\r\n"))
 
     // Reduce attribute
     val reduceAttributeRes: RDD[((Int, Float), (Float, Long))] = mapAttributeRes
@@ -77,28 +117,26 @@ class C45{
       .reduceByKey(_ + _)
       .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
 
-    println("====== Reduce Attribute Res ======")
-    println(reduceAttributeRes.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== Reduce Attribute Res ======")
+//    println(reduceAttributeRes.collect.mkString("(", ", ", ")\r\n"))
+    // --------------------------------------------------------
 
-    // attribute selection
+    // Attribute selection
     val reducePopulationRes: RDD[((Int, Float), Long)] = reduceAttributeRes
       .aggregateByKey(0L)({ case (acc, (_, cnt)) => acc + cnt }, _+_)
-//      .mapValues(_ => 1L)
-//      .reduceByKey(_ + _)
 
-    println("====== Reduce Population Res ======")
-    println(reducePopulationRes.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== Reduce Population Res ======")
+//    println(reducePopulationRes.collect.mkString("(", ", ", ")\r\n"))
 
     val mapComputationInput: RDD[((Int, Float), (Float, Long, Long))] = reduceAttributeRes
-      .join(reducePopulationRes)
-      .mapValues { case ((c, cnt), all) => (c, cnt, all) }
+      .join(reducePopulationRes).mapValues { case ((c, cnt), all) => (c, cnt, all) }
 
-    println("====== Map Computation Input ======")
-    println(mapComputationInput.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== Map Computation Input ======")
+//    println(mapComputationInput.collect.mkString("(", ", ", ")\r\n"))
 
     val entropy = calcEntropy(mapComputationInput)
-    println("====== Entropy ======")
-    println(entropy)
+//    println("====== Entropy ======")
+//    println(entropy)
 
     // Entropy(S_v)
     // ((j, aj1), (1, ...)), ((j, aj2), (1, ...)), ((j, aj), (2, ...))
@@ -108,8 +146,8 @@ class C45{
       .aggregateByKey((0L, 0f))({ case (acc, (_, _, all, part)) => (all, acc._2 + part) }, { case ((all, p1), (_, p2)) => (all, p1 + p2) })
       .mapValues{ case (all, inverseEntropy) => (all, -inverseEntropy) }
 
-    println("========== mapComputationInputWithEntropy ==========")
-    println(mapComputationInputWithEntropy.collect.mkString("(", ", ", ")\r\n"))
+//    println("========== mapComputationInputWithEntropy ==========")
+//    println(mapComputationInputWithEntropy.collect.mkString("(", ", ", ")\r\n"))
 
     // ((j, aj), (all, entropy))
     // all: amount of instances with j = aj
@@ -126,18 +164,22 @@ class C45{
       .foldByKey((0, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2))
       .mapValues{case (info, inverseSplitInfo) => (info, -inverseSplitInfo) }
 
-    println("====== reduceComputationWithInfoAndSplitInfoForJ ======")
-    println(reduceComputationWithInfoAndSplitInfoForJ.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== reduceComputationWithInfoAndSplitInfoForJ ======")
+//    println(reduceComputationWithInfoAndSplitInfoForJ.collect.mkString("(", ", ", ")\r\n"))
 
     val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ
       .mapValues{ case (info, splitInfo) => (entropy - info) / splitInfo }
 
-    println("====== mapComputationWithGainRatio ======")
-    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
+//    println("====== mapComputationWithGainRatio ======")
+//    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
 
     val bestAttribute = mapComputationWithGainRatio.reduce((res1, res2) => if (res1._2 > res2._2) res1 else res2)
 
-    println("====== bestAttribute ======")
-    println(bestAttribute)
+//    println("====== bestAttribute ======")
+//    println(bestAttribute)
+
+    // attribute index
+    bestAttribute._1
   }
+
 }

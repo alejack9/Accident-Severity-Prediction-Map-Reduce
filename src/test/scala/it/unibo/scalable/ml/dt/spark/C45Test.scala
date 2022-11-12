@@ -18,8 +18,12 @@ class C45Test extends AnyFunSuite {
 
   val dtc = new C45
 
-  test("run") {
+  test("get best attribute") {
     dtc.getBestAttribute(D)
-    assert(1==1)
+    assert(1 == 1)
+  }
+  test("train") {
+    dtc.train(D)
+    assert(1 == 1)
   }
 }
