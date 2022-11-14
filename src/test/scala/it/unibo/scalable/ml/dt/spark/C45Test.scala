@@ -23,7 +23,7 @@ class C45Test extends AnyFunSuite {
     assert(1 == 1)
   }
   test("train") {
-    dtc.train(D)
+    println(dtc.newTrain(D).mkString("\r\n"))
     assert(1 == 1)
   }
 }

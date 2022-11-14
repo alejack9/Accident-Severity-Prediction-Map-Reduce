@@ -21,42 +21,33 @@ class C45{
   // 01,32,2 -> linked X <= X è l'attribute index da aggiungere per ottenere il nuovo percorso
   // 32,01,2 -> leaf X <= X è il valore della classe
 
-  def train(D:Dataset): Map[String, Node]  = {
-    def _train(subSet: Dataset, previousPath: String, lastPath: String, table: Map[String, Node]): Map[String, Node] = {
-      println("PreviousPath: " + previousPath + lastPath)
-      println("==============Table=================")
-      println(table)
-      println("====================================")
-      println("==============Subset================")
-      println(subSet.collect.mkString("\r\n"))
-      println("====================================")
+  def newTrain(D: Dataset): Map[List[(Int, Float)], Node] = {
+    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node]): Map[List[(Int, Float)], Node] = {
+      // search best splitting attribute
+      val bestAttrIndex = getBestAttribute(dataset)
+      val bestAttrValues = dataset.map(_ (bestAttrIndex)).distinct.collect
 
-//       if ds size 1 --> leaf
-//
-//       if no attributes --> leaf
-//
-//       if all samples belongs to the same class --> leaf
-
-      val bestAttrIndex = getBestAttribute(D)
-      val bestAttrValues = subSet.map(_(bestAttrIndex)).distinct.collect
-
-      val toRet: Map[String, Node] = bestAttrValues
+      // for each possible value, create a subnode and update the tree table
+      bestAttrValues
         .map(value => {
-          val currentPath = "|" + bestAttrIndex.toString + "," + value.toString
-          val mapValue = if (lastPath == currentPath) Leaf(getClass(subSet)) else Link(bestAttrIndex)
+          val current = (bestAttrIndex, value)
 
-          _train(
-            subSet.filter(_ (bestAttrIndex) == value),
-            previousPath + lastPath,
-            currentPath,
-            table + (previousPath + lastPath + currentPath -> mapValue)
-          )
+          if (path.contains(current)) {
+            treeTable + ((path :+ current) -> Leaf(getClass(dataset)))
+          } else
+          {
+            _train(
+               dataset.filter(_ (bestAttrIndex) == value),
+              path :+ current,
+              treeTable + (path -> Link(bestAttrIndex))
+            )
+
+          }
         })
-        .reduce(_++_)
-
-      toRet
+        .reduce(_ ++ _)
     }
-    _train(D, "", "", HashMap.empty)
+
+    _train(D, List.empty, HashMap.empty)
   }
 
 

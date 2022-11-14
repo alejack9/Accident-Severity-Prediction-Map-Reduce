@@ -100,7 +100,9 @@ object Main {
         .map(_.map(_.toFloat))
 
       val c45 = new C45
-      c45.getBestAttribute(dataset)
+      val res = c45.newTrain(dataset)
+
+      println(res.mkString("\r\n"))
 
       //System.in.read()
 
