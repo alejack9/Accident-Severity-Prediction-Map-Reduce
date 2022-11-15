@@ -22,26 +22,30 @@ class C45{
   // 32,01,2 -> leaf X <= X è il valore della classe
 
   def newTrain(D: Dataset): Map[List[(Int, Float)], Node] = {
-    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node]): Map[List[(Int, Float)], Node] = {
+    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node], level: Int): Map[List[(Int, Float)], Node] = {
+      println(level)
+
       // search best splitting attribute
       val bestAttrIndex = getBestAttribute(dataset)
-      val bestAttrValues = dataset.map(_ (bestAttrIndex)).distinct.collect
+
+      // NaN means that the subset has 1 sample only
+      if (bestAttrIndex._2 == 0.0 || bestAttrIndex._2.isNaN) return treeTable + (path -> Leaf(getClass(dataset)))
+
+      val bestAttrValues = dataset.map(_ (bestAttrIndex._1)).distinct.collect
 
       // for each possible value, create a subnode and update the tree table
       bestAttrValues
         .map(value => {
-          val current = (bestAttrIndex, value)
-
+          val current = (bestAttrIndex._1, value)
           if (path.contains(current)) {
             treeTable + ((path :+ current) -> Leaf(getClass(dataset)))
-          } else
-          {
+          } else {
             _train(
-               dataset.filter(_ (bestAttrIndex) == value),
+              dataset.filter(_ (bestAttrIndex._1) == value),
               path :+ current,
-              treeTable + (path -> Link(bestAttrIndex))
+              treeTable + (path -> Link(bestAttrIndex._1)),
+              level + 1
             )
-
           }
         })
         .reduce(_ ++ _)
@@ -76,7 +80,7 @@ class C45{
     D.map(_.last).countByValue().maxBy(_._2)._1
   }
 
-  def getBestAttribute(D: Dataset): Int = {
+  def getBestAttribute(D: Dataset): (Int, Double) = {
 //      __   QUA(ck)
 //    <(o ) ___
 //      ( . > /
@@ -152,7 +156,7 @@ class C45{
     // Gain(a, T) = Dataset entropy - Info(a, T)
     val reduceComputationWithInfoAndSplitInfoForJ = mapComputationInputWithInfoAndSplitInfo
       .map { case ((j, _), (info, splitInfo)) => (j, (info, splitInfo)) }
-      .foldByKey((0, 0))((acc,infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2))
+      .foldByKey((0, 0))((acc, infoSplitInfo) => (acc._1 + infoSplitInfo._1, acc._2 + infoSplitInfo._2))
       .mapValues{case (info, inverseSplitInfo) => (info, -inverseSplitInfo) }
 
 //    println("====== reduceComputationWithInfoAndSplitInfoForJ ======")
@@ -170,7 +174,7 @@ class C45{
 //    println(bestAttribute)
 
     // attribute index
-    bestAttribute._1
+    bestAttribute
   }
 
 }

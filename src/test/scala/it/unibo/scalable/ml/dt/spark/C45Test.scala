@@ -23,7 +23,12 @@ class C45Test extends AnyFunSuite {
     assert(1 == 1)
   }
   test("train") {
-    println(dtc.newTrain(D).mkString("\r\n"))
+    for {
+      i <- Range.inclusive(1, 10)
+    } {
+      println(dtc.newTrain(D).mkString("\r\n"))
+      println(f"__________________{$i}_____________________")
+    }
     assert(1 == 1)
   }
 }
