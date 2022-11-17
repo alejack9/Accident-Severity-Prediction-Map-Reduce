@@ -6,6 +6,8 @@ import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils._
 import it.unibo.scalable.ml.dt.spark._
 
+import java.nio.file.Paths
+
 object Main {
   def main(args : Array[String]): Unit = {
 
@@ -90,7 +92,10 @@ object Main {
         ", unknownRelative: " + predictedYs.count(x => x == -1.0f) / predictedYs.length.toFloat +
         " }")
 
-      TreeSaver.save(tree, trainDSPath + "_" + args(2) + ".tree")
+      val path = Paths.get(trainDSPath).getParent.toAbsolutePath.toString
+      val name = Paths.get(trainDSPath).getFileName.toString
+      TreeSaver.save(tree, path + "/trees/" + name + "_" + args(2) + ".tree")
+
     } else {
       val sc = ContextFactory.getContext(LogLevel.OFF)
       val rdd = sc.textFile(trainDSPath)
