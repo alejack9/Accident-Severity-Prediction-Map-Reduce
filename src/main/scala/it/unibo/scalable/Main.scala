@@ -82,11 +82,13 @@ object Main {
 
       val score = tree.score(testData, predictedYs)
 
-      println("{" +
+      println("{ " +
         "  trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +
         ", score: " + score +
-        "}")
+        ", unknown: " + predictedYs.count(x => x == -1.0f) +
+        ", unknownRelative: " + predictedYs.count(x => x == -1.0f) / predictedYs.length.toFloat +
+        " }")
 
       TreeSaver.save(tree, trainDSPath + "_" + args(2) + ".tree")
     } else {
