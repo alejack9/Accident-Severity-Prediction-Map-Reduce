@@ -22,13 +22,19 @@ class C45Test extends AnyFunSuite {
     dtc.getBestAttribute(D)
     assert(1 == 1)
   }
+
   test("train") {
     for {
       i <- Range.inclusive(1, 10)
     } {
-      println(dtc.newTrain(D).mkString("\r\n"))
+      println(dtc.train(D).mkString("\r\n"))
       println(f"__________________{$i}_____________________")
     }
+    assert(1 == 1)
+  }
+
+  test("score") {
+    println(Evaluator.score(dtc.train(D), D))
     assert(1 == 1)
   }
 }
