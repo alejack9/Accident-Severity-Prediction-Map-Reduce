@@ -25,9 +25,8 @@ indexToBin = [i for i, x in enumerate(doBinning) if x == True]
 sizes = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152]
 
 for size in sizes:
-    print(size)
-    train_df = pd.read_pickle(f"./data/input_train_{size}.pkl")
-    test_df = pd.read_pickle(f"./data/input_test_{size}.pkl")
+    train_df = pd.read_pickle(f"./data/correct/input_train_{size}.pkl")
+    test_df = pd.read_pickle(f"./data/correct/input_test_{size}.pkl")
     for index in indexToBin:
         # print(f"BEFORE {train_df.columns[index]}")
         # print(train_df.iloc[:, index].value_counts())
@@ -36,9 +35,9 @@ for size in sizes:
         # print("AFTER")
         # print(train_bins)
         # print(train_df.iloc[:, index].value_counts())
-        print("+=======================================+")
+        # print("+=======================================+")
     print(train_df.head())
     print("=================")
-    print(test_df.head())
-    train_df.to_csv(f"./data/input_train_{size}_binned.csv")
-    test_df.to_csv(f"./data/input_test_{size}_binned.csv")
+    print(test_df.head(1))
+    train_df.to_csv(f"./data/correct/input_train_{size}_binned.csv")
+    test_df.to_csv(f"./data/correct/input_test_{size}_binned.csv")
