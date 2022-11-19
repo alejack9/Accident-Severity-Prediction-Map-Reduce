@@ -98,18 +98,43 @@ object Main {
 
     } else {
       val sc = ContextFactory.getContext(LogLevel.OFF)
-      val rdd = sc.textFile(trainDSPath)
+      val trainRdd = sc.textFile(trainDSPath)
 
-      val dataset = rdd
+      val trainData = trainRdd
         .mapPartitionsWithIndex{(idx, iter) => if(idx == 0) iter.drop(1) else iter}
         .map(row => row.split(",").toSeq)
         .map(_.drop(1))
         .map(_.map(_.toFloat))
 
-      val c45 = new C45
-      val res = c45.newTrain(dataset)
+      val testRdd = sc.textFile(testDSPath)
 
-      println(res.mkString("\r\n"))
+      val testData = testRdd
+        .mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
+        .map(row => row.split(",").toSeq)
+        .map(_.drop(1))
+        .map(_.map(_.toFloat))
+
+      val c45 = new C45
+      var t1 = System.nanoTime
+      val treeMap = c45.train(trainData)
+      val trainTime = System.nanoTime - t1
+
+      println("train finished")
+      t1 = System.nanoTime
+      val predictedYs = Evaluator.predict(treeMap, testData)
+      val testTime = System.nanoTime - t1
+
+
+      val score = Evaluator.score(testData, predictedYs)
+
+      println(treeMap.mkString("\r\n"))
+      println("{ " +
+        "  trainTime: " + trainTime / 1e9d +
+        ", testTime: " + testTime / 1e9d +
+        ", score: " + score +
+        ", unknown: " + predictedYs.filter{x => x == -1.0f}.count() +
+        ", unknownRelative: " + predictedYs.filter{x => x == -1.0f}.count() / predictedYs.count().toFloat +
+        " }")
 
       //System.in.read()
 
