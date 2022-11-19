@@ -4,6 +4,7 @@ import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.spark.Types.Dataset
 import org.apache.spark.rdd.RDD
 
+import scala.annotation.tailrec
 import scala.collection.immutable.HashMap
 
 object Types {
@@ -21,9 +22,8 @@ class C45{
   // 01,32,2 -> linked X <= X è l'attribute index da aggiungere per ottenere il nuovo percorso
   // 32,01,2 -> leaf X <= X è il valore della classe
 
-  def newTrain(D: Dataset): Map[List[(Int, Float)], Node] = {
+  def train(D: Dataset): Map[List[(Int, Float)], Node] = {
     def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node], level: Int): Map[List[(Int, Float)], Node] = {
-      println(level)
 
       // search best splitting attribute
       val bestAttrIndex = getBestAttribute(dataset)
@@ -178,3 +178,4 @@ class C45{
   }
 
 }
+
