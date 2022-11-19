@@ -51,7 +51,7 @@ class C45{
         .reduce(_ ++ _)
     }
 
-    _train(D, List.empty, HashMap.empty)
+    _train(D, List.empty, HashMap.empty, 0)
   }
 
 

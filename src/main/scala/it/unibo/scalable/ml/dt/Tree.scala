@@ -13,7 +13,10 @@ sealed trait Tree[T] {
       def _traverse(tree: Tree[T]): T = {
         tree match {
           case Leaf(target) => target
-          case CondNode(cond, children) => _traverse(children(cond(sample)))
+          case CondNode(cond, children) =>
+            val next = cond(sample)
+            if(next == -1) return (-1.0f).asInstanceOf[T]
+            _traverse(children(cond(sample)))
         }
       }
 
