@@ -4,7 +4,6 @@ import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.spark.Types.Dataset
 import org.apache.spark.rdd.RDD
 
-import scala.annotation.tailrec
 import scala.collection.immutable.HashMap
 
 object Types {
@@ -81,11 +80,6 @@ class C45{
   }
 
   def getBestAttribute(D: Dataset): (Int, Double) = {
-//      __   QUA(ck)
-//    <(o ) ___
-//      ( . > /
-//       `---'
-
     val dsLength = D.count()
 
     // 1st map-reduce: DATA PREPARATION (one time task)

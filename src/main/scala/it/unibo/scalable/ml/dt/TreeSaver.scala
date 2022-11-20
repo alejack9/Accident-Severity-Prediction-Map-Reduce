@@ -20,7 +20,7 @@ object TreeSaver {
   }
 
   def save[T](tree: Tree[T], pw: PrintWriter): Unit = {
-    saveTree(List((0, tree)), pw)
+    pw.write(tree.toYaml())
     pw.close()
   }
 

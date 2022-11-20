@@ -22,5 +22,4 @@ object Evaluator {
   def score(ds: Dataset, ys: RDD[Float]): Float = {
     ds.zip(ys).filter { case (row, predicted) => row.last == predicted }.count().toFloat / ds.count()
   }
-
 }

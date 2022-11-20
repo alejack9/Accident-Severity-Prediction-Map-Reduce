@@ -3,7 +3,7 @@ package it.unibo.scalable.ml.dt.base
 import it.unibo.scalable.ml.dt.Utils.{Format, GenSeqSort}
 import it.unibo.scalable.ml.dt.Utils.Format.Format
 import it.unibo.scalable.ml.dt.Utils.Types.{Attribute, Dataset}
-import it.unibo.scalable.ml.dt.{Tree, _}
+import it.unibo.scalable.ml.dt._
 
 import scala.collection.GenSeq
 import scala.util.{Failure, Success, Try}

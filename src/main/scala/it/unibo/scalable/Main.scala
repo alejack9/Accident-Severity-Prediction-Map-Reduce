@@ -54,15 +54,26 @@ object Main {
 
       // read mode changed because it got overhead error
       //val x: Iterator[Seq[Float]] = trainSrc.getLines.drop(1).map(r => r.split(',').map(_.trim).tail.map(_.toFloat))
+//      val featFormats = List(
+//        Format.Continuous, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
+//        Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Categorical,
+//        Format.Continuous, Format.Categorical, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Categorical,
+//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+//        Format.Continuous, Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
+//        Format.Categorical)
+
       val featFormats = List(
-        Format.Continuous, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
-        Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Categorical,
-        Format.Continuous, Format.Categorical, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Categorical,
+        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
         Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-        Format.Continuous, Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
         Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
         Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-        Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
+        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
         Format.Categorical)
 
       val input = args(2) match {
@@ -85,12 +96,12 @@ object Main {
       val score = tree.score(testData, predictedYs)
 
       println("{ " +
-        "  trainTime: " + trainTime / 1e9d +
+        " trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +
         ", score: " + score +
-        ", unknown: " + predictedYs.count(x => x == -1.0f) +
-        ", unknownRelative: " + predictedYs.count(x => x == -1.0f) / predictedYs.length.toFloat +
-        " }")
+        ", unknown: " + predictedYs.count(_ == -1.0f) +
+        ", unknownRelative: " + predictedYs.count(_ == -1.0f) / predictedYs.length.toFloat +
+        "  }")
 
       val path = Paths.get(trainDSPath).getParent.toAbsolutePath.toString
       val name = Paths.get(trainDSPath).getFileName.toString
@@ -119,7 +130,6 @@ object Main {
       val treeMap = c45.train(trainData)
       val trainTime = System.nanoTime - t1
 
-      println("train finished")
       t1 = System.nanoTime
       val predictedYs = Evaluator.predict(treeMap, testData)
       val testTime = System.nanoTime - t1
@@ -127,14 +137,15 @@ object Main {
 
       val score = Evaluator.score(testData, predictedYs)
 
+
       println(treeMap.mkString("\r\n"))
       println("{ " +
-        "  trainTime: " + trainTime / 1e9d +
+        " trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +
         ", score: " + score +
         ", unknown: " + predictedYs.filter{x => x == -1.0f}.count() +
         ", unknownRelative: " + predictedYs.filter{x => x == -1.0f}.count() / predictedYs.count().toFloat +
-        " }")
+        "  }")
 
       //System.in.read()
 

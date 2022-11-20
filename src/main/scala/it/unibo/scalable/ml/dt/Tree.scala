@@ -7,6 +7,9 @@ import scala.collection.GenSeq
 
 sealed trait Tree[T] {
 
+  def toYaml(): String = toYaml(0)
+  def toYaml(spaces: Int): String
+
   def predict[C <: Seq[Float]](data: Dataset[C]): GenSeq[T] = {
     def traverse(sample: C): T = {
       @tailrec
@@ -62,6 +65,8 @@ sealed trait Tree[T] {
 
 case class CondNode[C, T](cond: Condition[C], children: GenSeq[Tree[T]]) extends Tree[T] {
   override def toString = f"CondNode(cond:(${cond}),children:[${children.mkString(", ")}])"
+
+  override def toYaml(spaces: Int) = f"${" " * spaces}index: ${cond.index}\r\n${" " * spaces}children:\r\n${cond.getValues.zip(children).map{case (v, child) => f"${" " * spaces}- val: $v\r\n${child.toYaml(spaces + 2)}"}.mkString("\r\n")}"
 }
 
 object LeafFactory {
@@ -70,6 +75,6 @@ object LeafFactory {
 
 case class Leaf[T](target: T) extends Tree[T] {
   override def toString = f"Leaf(${target})"
-  // RIP
-//  def this(ds: Dataset)(implicit ev: Float =:= T) = this(ev(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1))
+
+  override def toYaml(spaces: Int) = f"${" " * spaces}leaf: ${target}"
 }
