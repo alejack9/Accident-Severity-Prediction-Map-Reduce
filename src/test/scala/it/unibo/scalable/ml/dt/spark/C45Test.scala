@@ -16,6 +16,20 @@ class C45Test extends AnyFunSuite {
     Seq(7, 1, 3, 2)
   ).map(_.map(_.toFloat)))
 
+  val D1: Types.Dataset = sc.parallelize(List(
+    Seq(53, 3, 5, 1),
+    Seq(1, 1, 1, 1),
+    Seq(1, 1, 9, 1),
+    Seq(90, 2, 1, 0),
+    Seq(1, 55, 11, 0),
+    Seq(1, 9, 11, 1),
+    Seq(0, 1, 3, 5),
+    Seq(8, 77, 42, 1),
+    Seq(2, 32, 57, 2),
+    Seq(245, 0, 24, 0),
+  ).map(_.map(_.toFloat)))
+
+
   val dtc = new C45
 
   test("get best attribute") {
@@ -35,6 +49,13 @@ class C45Test extends AnyFunSuite {
 
   test("score") {
     println(Evaluator.score(D, Evaluator.predict(dtc.train(D), D)))
+    assert(1 == 1)
+  }
+
+  test("toYaml") {
+    val treeTable = dtc.train(D1)
+    println(treeTable.mkString("\r\n"))
+    println(Evaluator.toYaml(treeTable))
     assert(1 == 1)
   }
 }

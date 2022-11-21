@@ -130,15 +130,14 @@ object Main {
       val treeMap = c45.train(trainData)
       val trainTime = System.nanoTime - t1
 
+      println(Evaluator.toYaml(treeMap))
+
       t1 = System.nanoTime
       val predictedYs = Evaluator.predict(treeMap, testData)
       val testTime = System.nanoTime - t1
 
-
       val score = Evaluator.score(testData, predictedYs)
 
-
-      println(treeMap.mkString("\r\n"))
       println("{ " +
         " trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +

@@ -94,5 +94,11 @@ class C45ParTest extends AnyFunSuite {
     val t = dtc.train(D, Vector(Format.Categorical, Format.Continuous, Format.Categorical))
     assert(t.toString.equals("CondNode(cond:(feat 2 [ 3.0 , 5.0 , 7.0 , 11.0 ]),children:[Leaf(2.0), Leaf(0.0), Leaf(0.0), Leaf(2.0)])"))
   }
+
+  test("toYaml") {
+    val t = dtc.train(D, Vector(Format.Continuous, Format.Continuous, Format.Continuous))
+    println(t.toYaml)
+    assert(1 == 1)
+  }
 }
 
