@@ -34,7 +34,7 @@ class C45Test extends AnyFunSuite {
   }
 
   test("score") {
-    println(Evaluator.score(dtc.train(D), D))
+    println(Evaluator.score(D, Evaluator.predict(dtc.train(D), D)))
     assert(1 == 1)
   }
 }
