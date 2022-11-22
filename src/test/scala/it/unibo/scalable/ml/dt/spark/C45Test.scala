@@ -53,7 +53,7 @@ class C45Test extends AnyFunSuite {
   }
 
   test("toYaml") {
-    val treeTable = dtc.train(D1)
+    val treeTable = dtc.train(D)
     println(treeTable.mkString("\r\n"))
     println(Evaluator.toYaml(treeTable))
     assert(1 == 1)

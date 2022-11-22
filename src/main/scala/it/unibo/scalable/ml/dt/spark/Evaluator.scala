@@ -24,16 +24,15 @@ object Evaluator {
   }
 
   def toYaml(treeTable: Map[List[(Int, Float)], Node]): String = {
-
     def _toYaml(treeTable: Map[List[(Int, Float)], Node], nodeID:List[(Int, Float)], level: Int): String = {
       treeTable.get(nodeID) match {
-        case Some(Link(index)) => f"\r\n${" " * level * 2}index: $index \r\n${" " * level * 2}children: " +
+        case Some(Link(index)) => f"\r\n${"  " * level}index: $index \r\n${"  " * level}children: " +
           f"${treeTable.filterKeys(k =>
             k.length == level + 1
             || (k.length > level + 1 && k(level+1)._1 == index)
             && k(level)._1 == index).map {
-            case (k, _) => f"\r\n${" " * level * 2}- val: ${k(level)._2} ${_toYaml(treeTable, k, level + 1)}"}.mkString(",")} "
-        case Some(Leaf(target)) => f"\r\n${" " * level * 2}leaf: $target"
+            case (k, _) => f"\r\n${"  " * level}- val: ${k(level)._2}${_toYaml(treeTable, k, level + 1)}"}.mkString("")}"
+        case Some(Leaf(target)) => f"\r\n${"  " * level}leaf: $target"
       }
     }
 

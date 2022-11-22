@@ -22,13 +22,18 @@ class C45{
   // 32,01,2 -> leaf X <= X è il valore della classe
 
   def train(D: Dataset): Map[List[(Int, Float)], Node] = {
-    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node], level: Int): Map[List[(Int, Float)], Node] = {
 
+    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node], level: Int): Map[List[(Int, Float)], Node] = {
+      println("===============================")
+      println(treeTable.mkString("\r\n"))
       // search best splitting attribute
       val bestAttrIndex = getBestAttribute(dataset)
 
       // NaN means that the subset has 1 sample only
-      if (bestAttrIndex._2 == 0.0 || bestAttrIndex._2.isNaN) return treeTable + (path -> Leaf(getClass(dataset)))
+      if (bestAttrIndex._2 == 0.0 || bestAttrIndex._2.isNaN) return {
+        println(f"creating a leaf with gain ratio ${bestAttrIndex._2} for index ${bestAttrIndex._1}")
+        treeTable + (path -> Leaf(getClass(dataset)))
+      }
 
       val bestAttrValues = dataset.map(_ (bestAttrIndex._1)).distinct.collect
 
@@ -36,7 +41,8 @@ class C45{
       bestAttrValues
         .map(value => {
           val current = (bestAttrIndex._1, value)
-          if (path.contains(current)) {
+          if (path.nonEmpty && path.last == current) {
+            println(f"creating a leaf bc ${current} is last of ${path}")
             treeTable + ((path :+ current) -> Leaf(getClass(dataset)))
           } else {
             _train(
@@ -53,8 +59,18 @@ class C45{
     _train(D, List.empty, HashMap.empty, 0)
   }
 
+// - sum(p(D, C) * log p (D, c)) for each c in C
+  def calcEntropy2(in: RDD[((Int, Float), (Float, Long, Long))]): Float = {
 
-  //                     j , a_j       c     cnt   all
+  0f
+  }
+
+
+
+
+
+
+    //                          j , a_j       c     cnt   all
   def calcEntropy(in: RDD[((Int, Float), (Float, Long, Long))]): Float = {
     val classesCounts = in
       .map {case ((j, _), (c, cnt, _)) => ((j, c), cnt)}
@@ -79,12 +95,15 @@ class C45{
     D.map(_.last).countByValue().maxBy(_._2)._1
   }
 
+  // --------AAAA-----AAAA-----------
   def getBestAttribute(D: Dataset): (Int, Double) = {
     val dsLength = D.count()
 
     // 1st map-reduce: DATA PREPARATION (one time task)
     // Extract attribute index, attribute value and class label from instance of the record
     // out ((j, a_j), (sample_id, c))
+//
+
 
     // Map attribute
     val mapAttributeRes: RDD[((Int, Float), (Long, Float))] = D
@@ -99,6 +118,7 @@ class C45{
 //    println("====== Map Attribute Res ======")
 //    println(mapAttributeRes.collect.mkString("(", ", ", ")\r\n"))
 
+
     // Reduce attribute
     val reduceAttributeRes: RDD[((Int, Float), (Float, Long))] = mapAttributeRes
       .map { case ((j, aj), (sample_id, c)) => ((j, aj, c), sample_id) }
@@ -108,7 +128,6 @@ class C45{
 
 //    println("====== Reduce Attribute Res ======")
 //    println(reduceAttributeRes.collect.mkString("(", ", ", ")\r\n"))
-    // --------------------------------------------------------
 
     // Attribute selection
     val reducePopulationRes: RDD[((Int, Float), Long)] = reduceAttributeRes
@@ -117,11 +136,18 @@ class C45{
 //    println("====== Reduce Population Res ======")
 //    println(reducePopulationRes.collect.mkString("(", ", ", ")\r\n"))
 
+
     val mapComputationInput: RDD[((Int, Float), (Float, Long, Long))] = reduceAttributeRes
       .join(reducePopulationRes).mapValues { case ((c, cnt), all) => (c, cnt, all) }
 
 //    println("====== Map Computation Input ======")
 //    println(mapComputationInput.collect.mkString("(", ", ", ")\r\n"))
+
+    //    Seq(3, 3, 5, 0)
+    //    Seq(1, 1, 7, 0)
+    //    Seq(1, 2, 11, 2)
+    //    Seq(1, 9, 11, 2)
+    //    Seq(7, 1, 3, 2)
 
     val entropy = calcEntropy(mapComputationInput)
 //    println("====== Entropy ======")
@@ -137,6 +163,7 @@ class C45{
 
 //    println("========== mapComputationInputWithEntropy ==========")
 //    println(mapComputationInputWithEntropy.collect.mkString("(", ", ", ")\r\n"))
+    System.exit(-1)
 
     // ((j, aj), (all, entropy))
     // all: amount of instances with j = aj
@@ -159,8 +186,9 @@ class C45{
     val mapComputationWithGainRatio = reduceComputationWithInfoAndSplitInfoForJ
       .mapValues{ case (info, splitInfo) => (entropy - info) / splitInfo }
 
-//    println("====== mapComputationWithGainRatio ======")
-//    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
+    println("====== mapComputationWithGainRatio ======")
+    println(f"ds length $dsLength")
+    println(mapComputationWithGainRatio.collect.mkString("(", ", ", ")\r\n"))
 
     val bestAttribute = mapComputationWithGainRatio.reduce((res1, res2) => if (res1._2 > res2._2) res1 else res2)
 
