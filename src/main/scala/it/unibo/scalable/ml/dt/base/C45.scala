@@ -93,7 +93,7 @@ class C45() extends C45Alg {
         }
 
       println("============== info gain ratios ")
-      println(infoGainRatios.map(_._1).mkString(","))
+      println(infoGainRatios.map(t => (t._4, t._1)).sortBy(_._2).mkString(","))
 
       if (infoGainRatios.forall(_._1 == 0.0f)) return Success(LeafFactory.get(ds))
 

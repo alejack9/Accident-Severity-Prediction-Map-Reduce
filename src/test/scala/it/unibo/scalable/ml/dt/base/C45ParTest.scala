@@ -96,7 +96,7 @@ class C45ParTest extends AnyFunSuite {
   }
 
   test("toYaml") {
-    val t = dtc.train(D, Vector(Format.Continuous, Format.Continuous, Format.Continuous))
+    val t = dtc.train(D, Vector(Format.Categorical, Format.Categorical, Format.Categorical))
     println(t.toYaml)
     assert(1 == 1)
   }

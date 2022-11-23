@@ -38,6 +38,11 @@ class C45Test extends AnyFunSuite {
   }
 
   test("train") {
+    println(dtc.train(D).mkString("\r\n"))
+    assert(1 == 1)
+  }
+
+  test("train  10 times") {
     for {
       i <- Range.inclusive(1, 10)
     } {
