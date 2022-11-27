@@ -14,6 +14,7 @@ object Types {
 // - key: list of tuples (feat index, feat value) representing the path for the node
 // - value: node object. I can be a Link(index of the splitting feature) or Leaf(target class)
 class C45 {
+
   def train(D: Dataset): Map[List[(Int, Float)], Node] = {
     def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node]): Map[List[(Int, Float)], Node] = {
       // get the best attribute index with the related gain ratio
