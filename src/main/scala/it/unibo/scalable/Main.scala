@@ -150,20 +150,5 @@ object Main {
 
       System.in.read()
     }
-
-//    val sc = ContextFactory.getContext()
-//
-//    val rdd = sc.textFile(trainDSPath)
-//    val dataset = rdd
-////      .mapPartitionsWithIndex{(idx, iter) => if(idx == 0) iter.drop(1) else iter}
-//      .map(row => row.split(",").toSeq)
-//      .map(_.drop(1))
-//      .map(_.map(_.toFloat))
-////      .map(row => (row.reverse.head, row.reverse.tail))
-////      .map{case (y, xs) => (y.toInt, xs.map(_.toFloat))}
-//    print(dataset.collect.mkString("[\r\n", "\r\n", "]"))
-//    val c45 = new C45
-//    c45.run(dataset)
-////    def giniIndex(ys: Seq[Float]): Float = 1 - (ys.distinct.map(c => math.pow(ys.count(_ == c) / ys.length.toFloat, 2).toFloat) aggregate 0.0.toFloat)((a, e) => a + e, _+_)
   }
 }
