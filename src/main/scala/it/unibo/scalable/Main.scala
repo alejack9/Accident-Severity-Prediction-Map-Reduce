@@ -148,8 +148,7 @@ object Main {
         ", unknownRelative: " + predictedYs.filter{x => x == -1.0f}.count() / predictedYs.count().toFloat +
         "  }")
 
-      //System.in.read()
-
+      System.in.read()
     }
 
 //    val sc = ContextFactory.getContext()
