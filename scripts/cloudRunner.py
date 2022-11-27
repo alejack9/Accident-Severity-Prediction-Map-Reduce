@@ -1,18 +1,31 @@
 import subprocess
+import sys
 
 BUCKET_NAME='source'
-REGION='EUROPE-WEST8' # milan
+REGION='europe-west8' # milan
+ZONE='europe-west8-b' # milan
 CLUSTER_NAME='Accidental-Severity-Prediction-Cluster'
-MASTER_MACHINE_TYPE='N2'
-WORKER_MACHINE_TYPE=MASTER_MACHINE_TYPE
+MASTER_MACHINE_TYPE='n2-standard-2'
+WORKER_MACHINE_TYPE='n2-standard-4'
 NUM_WORKERS='2'
-# TODO
-SP_MODE=''
-SR_MODE=''
+
+SP_MODE='spark'
 PARTITIONS=''
 
-INPUT_FILE_NAME="input_test_1024_binned.csv"
+INPUT_TRAIN_FILE_NAME="input_train_1024_binned.csv"
+INPUT_TEST_FILE_NAME="input_test_1024_binned.csv"
 JOB_ID=4242
+
+while sys.argv[-1] != '-y':
+    print("Did you run 'gcloud init'? (run with '-y' to avoid this check)")
+    print("y/n: ")
+    answer = input()
+    if answer == "n":
+        print("Do it.")
+        exit()
+    if answer == "y":
+        break
+    print("Answer 'y' or 'n'")
 
 subprocess.call(['sbt', 'clean', 'assembly'])
 
@@ -27,6 +40,8 @@ subprocess.call(['gcloud',
                 f'${CLUSTER_NAME}',
                 '--region',
                 f'${REGION}',
+                '--zone',
+                f'${ZONE}',
                 '--master-machine-type',
                 f'${MASTER_MACHINE_TYPE}',
                 '--num-workers',
@@ -43,8 +58,14 @@ subprocess.call(['gsutil',
 
 subprocess.call(['gsutil',
                 'cp',
-                f'data/${INPUT_FILE_NAME}input_test_1024_binned.csv',
-                f'gs://${BUCKET_NAME}/${INPUT_FILE_NAME}'
+                f'data/${INPUT_TRAIN_FILE_NAME}',
+                f'gs://${BUCKET_NAME}/${INPUT_TRAIN_FILE_NAME}'
+])
+
+subprocess.call(['gsutil',
+                'cp',
+                f'data/${INPUT_TEST_FILE_NAME}',
+                f'gs://${BUCKET_NAME}/${INPUT_TEST_FILE_NAME}'
 ])
 subprocess.call(['gcloud',
                 'dataproc',
@@ -57,11 +78,9 @@ subprocess.call(['gcloud',
                 f'--region=${REGION}',
                 f'--jar=gs://${BUCKET_NAME}/FinalProject-assembly-1.0.0.jar',
                 '--',
-                'yarn',
-                f'gs://${BUCKET_NAME}/${INPUT_FILE_NAME}',
-                f'gs://${BUCKET_NAME}',
-                f'sp=${SP_MODE}',
-                f'sr=${SR_MODE}',
+                f'gs://${BUCKET_NAME}/${INPUT_TRAIN_FILE_NAME}',
+                f'gs://${BUCKET_NAME}/${INPUT_TEST_FILE_NAME}',
+                f'${SP_MODE}',
                 f'${PARTITIONS}'
 ])
 
@@ -76,10 +95,5 @@ subprocess.call(['gcloud',
 subprocess.call(['gsutil',
                 'cp',
                 '-r',
-                f'gs://${BUCKET_NAME}/stayPoints data/.'
-])
-subprocess.call(['gsutil',
-                'cp',
-                '-r',
-                f'gs://${BUCKET_NAME}/stayRegions data/.'
+                f'gs://${BUCKET_NAME}/output.txt data/.'
 ])
