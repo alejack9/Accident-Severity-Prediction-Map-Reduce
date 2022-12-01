@@ -2,11 +2,14 @@ package it.unibo.scalable
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import java.io._
+
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils._
 import it.unibo.scalable.ml.dt.spark._
 
 import java.nio.file.Paths
+
 
 object Main {
   def main(args : Array[String]): Unit = {
@@ -25,6 +28,8 @@ object Main {
       println("Computation mode not provided")
       sys.exit(-1)
     }
+
+    val toOutFile = args.length >= 4
 
     val modes = Array("seq", "par", "spark")
 
@@ -95,19 +100,30 @@ object Main {
 
       val score = tree.score(testData, predictedYs)
 
-      println("{ " +
+      val results = "{ " +
         " trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +
         ", score: " + score +
         ", unknown: " + predictedYs.count(_ == -1.0f) +
         ", unknownRelative: " + predictedYs.count(_ == -1.0f) / predictedYs.length.toFloat +
-        "  }")
+        "  }"
+
+      println(results)
+
+      // write results to a new file
+      if (toOutFile){
+        val bw = new BufferedWriter(new FileWriter(new File(args(3))))
+        bw.write(results)
+        bw.close()
+      }
+
 
       val path = Paths.get(trainDSPath).getParent.toAbsolutePath.toString
       val name = Paths.get(trainDSPath).getFileName.toString
       TreeSaver.save(tree, path + "/trees/" + name + "_" + args(2) + ".tree")
 
-    } else {
+    } else { // spark mode
+
       val sc = ContextFactory.getContext(LogLevel.OFF)
       val trainRdd = sc.textFile(trainDSPath)
 
@@ -132,7 +148,7 @@ object Main {
       val treeMap = c45.train(trainData)
       val trainTime = System.nanoTime - t1
 
-      println(treeMap.mkString("\r\n"))
+      // println(treeMap.mkString("\r\n"))
 
       t1 = System.nanoTime
       val predictedYs = Evaluator.predict(treeMap, testData)
@@ -140,15 +156,19 @@ object Main {
 
       val score = Evaluator.score(testData, predictedYs)
 
-      println("{ " +
+      val results = "{ " +
         " trainTime: " + trainTime / 1e9d +
         ", testTime: " + testTime / 1e9d +
         ", score: " + score +
         ", unknown: " + predictedYs.filter{x => x == -1.0f}.count() +
         ", unknownRelative: " + predictedYs.filter{x => x == -1.0f}.count() / predictedYs.count().toFloat +
-        "  }")
+        "  }"
 
-      System.in.read()
+      println(results)
+
+      sc.parallelize(Seq(results)).saveAsTextFile(args(3))
+
+      //System.in.read()
     }
   }
 }
