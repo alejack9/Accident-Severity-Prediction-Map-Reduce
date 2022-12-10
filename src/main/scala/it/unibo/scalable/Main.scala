@@ -13,6 +13,11 @@ import java.nio.file.Paths
 
 object Main {
   def main(args : Array[String]): Unit = {
+    // arg 0: train path
+    // arg 1: test path
+    // arg 2: mode
+    // arg 3: out path
+    // arg 4: partitions
 
     if (args.length == 0) {
       println("Training ds not provided")
@@ -30,12 +35,9 @@ object Main {
     }
 
     if (args.length == 3) {
-      println("Number of partitions not provided")
+      println("Output file path not provided")
       sys.exit(-1)
     }
-    val partitions = args(3).toInt
-
-    val toOutFile = args.length >= 5
 
     val modes = Array("seq", "par", "spark")
 
@@ -117,12 +119,9 @@ object Main {
       println(results)
 
       // write results to a new file
-      if (toOutFile){
-        val bw = new BufferedWriter(new FileWriter(new File(args(4))))
-        bw.write(results)
-        bw.close()
-      }
-
+      val bw = new BufferedWriter(new FileWriter(new File(args(3))))
+      bw.write(results)
+      bw.close()
 
       val path = Paths.get(trainDSPath).getParent.toAbsolutePath.toString
       val name = Paths.get(trainDSPath).getFileName.toString
@@ -133,12 +132,17 @@ object Main {
       val sc = ContextFactory.getContext(LogLevel.OFF)
       val trainRdd = sc.textFile(trainDSPath)
 
-      val trainData = trainRdd
+      val unpartiotionedTrainData = trainRdd
         .mapPartitionsWithIndex{(idx, iter) => if(idx == 0) iter.drop(1) else iter}
         .map(row => row.split(",").toSeq)
         .map(_.drop(1))
         .map(_.map(_.toFloat))
-        .repartition(partitions)
+
+      val trainData = if (args.length == 5)
+          unpartiotionedTrainData.repartition(args(4).toInt)
+        else
+          unpartiotionedTrainData
+
 
       val testRdd = sc.textFile(testDSPath)
 
