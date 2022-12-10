@@ -12,9 +12,9 @@ NUM_WORKERS='2'
 SP_MODE='spark'
 PARTITIONS=''
 
-DIM = 1024
-INPUT_TRAIN_FILE_NAME="input_train_1024_binned.csv"
-INPUT_TEST_FILE_NAME="input_test_1024_binned.csv"
+DIM = 8192
+INPUT_TRAIN_FILE_NAME=f"input_train_{DIM}_binned.csv"
+INPUT_TEST_FILE_NAME=f"input_test_{DIM}_binned.csv"
 JOB_ID=4242
 
 while sys.argv[-1] != '-y':
@@ -28,7 +28,6 @@ while sys.argv[-1] != '-y':
         break
     print("Answer 'y' or 'n'")
 
-# 
 # subprocess.call(['sbt', 'clean', 'assembly'], shell=True)
 
 # Create the bucket for jar, input and output
@@ -40,6 +39,7 @@ subprocess.call(['gcloud',
                 'clusters',
                 'create',
                 f'{CLUSTER_NAME}',
+                '--enable-component-gateway',
                 '--region',
                 f'{REGION}',
                 '--zone',
@@ -101,4 +101,4 @@ subprocess.call(['gsutil',
                 '-r',
                 f'gs://{BUCKET_NAME}/output_{DIM}.txt', 
                 'data/.'
-], shell=True) 
+], shell=True)
