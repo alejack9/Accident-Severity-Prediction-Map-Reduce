@@ -29,7 +29,13 @@ object Main {
       sys.exit(-1)
     }
 
-    val toOutFile = args.length >= 4
+    if (args.length == 3) {
+      println("Number of partitions not provided")
+      sys.exit(-1)
+    }
+    val partitions = args(3).toInt
+
+    val toOutFile = args.length >= 5
 
     val modes = Array("seq", "par", "spark")
 
@@ -112,7 +118,7 @@ object Main {
 
       // write results to a new file
       if (toOutFile){
-        val bw = new BufferedWriter(new FileWriter(new File(args(3))))
+        val bw = new BufferedWriter(new FileWriter(new File(args(4))))
         bw.write(results)
         bw.close()
       }
@@ -132,6 +138,7 @@ object Main {
         .map(row => row.split(",").toSeq)
         .map(_.drop(1))
         .map(_.map(_.toFloat))
+        .repartition(partitions)
 
       val testRdd = sc.textFile(testDSPath)
 

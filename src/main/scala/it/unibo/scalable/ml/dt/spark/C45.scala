@@ -2,6 +2,7 @@ package it.unibo.scalable.ml.dt.spark
 
 import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.spark.Types.Dataset
+// import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
 import scala.collection.immutable.HashMap
@@ -81,6 +82,7 @@ class C45 {
 //      .map { case ((j, aj), c) => ((j, aj, c), 1L) }
       .reduceByKey(_ + _)
       .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
+//      .partitionBy(Partitioner.defaultPartitioner() 10)
 
     // 2nd map-reduce step: ATTRIBUTE SELECTION
     // reduce population
