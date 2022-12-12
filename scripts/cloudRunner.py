@@ -7,12 +7,12 @@ ZONE='europe-west6-b' # zurigo
 CLUSTER_NAME='accidental-severity-prediction-cluster'
 MASTER_MACHINE_TYPE='n1-standard-2'
 WORKER_MACHINE_TYPE='n1-standard-4'
-NUM_WORKERS='2'
+NUM_WORKERS='3'
 
 SP_MODE='spark'
 PARTITIONS=''
 
-DIM = 8192
+DIM = 1024
 INPUT_TRAIN_FILE_NAME=f"input_train_{DIM}_binned.csv"
 INPUT_TEST_FILE_NAME=f"input_test_{DIM}_binned.csv"
 JOB_ID=4242
@@ -70,13 +70,15 @@ subprocess.call(['gsutil',
                 f'gs://{BUCKET_NAME}/{INPUT_TEST_FILE_NAME}'
 ], shell=True)
 
-subprocess.call(['gcloud',
+    
+# arg 3: out path
+# arg 4: partitions
+
+submit_command_args = ['gcloud',
                 'dataproc',
                 'jobs',
                 'submit',
                 'spark',
-                # f'--id {JOB_ID}',
-                # '--async',
                 f'--cluster={CLUSTER_NAME}',
                 f'--region={REGION}',
                 f'--jar=gs://{BUCKET_NAME}/FinalProject-assembly-1.0.0.jar',
@@ -84,9 +86,13 @@ subprocess.call(['gcloud',
                 f'gs://{BUCKET_NAME}/{INPUT_TRAIN_FILE_NAME}',
                 f'gs://{BUCKET_NAME}/{INPUT_TEST_FILE_NAME}',
                 f'{SP_MODE}',
-                f'gs://{BUCKET_NAME}/output_{DIM}/',
-                f'{PARTITIONS}'
-], shell=True)
+                f'gs://{BUCKET_NAME}/output_{DIM}/'
+                ]
+
+if (PARTITIONS == ""):
+    submit_command_args.append(PARTITIONS)
+
+subprocess.call(submit_command_args, shell=True)
 
 subprocess.call(['gcloud',
                 'dataproc',
@@ -101,4 +107,11 @@ subprocess.call(['gsutil',
                 '-r',
                 f'gs://{BUCKET_NAME}/output_{DIM}.txt', 
                 'data/.'
+], shell=True)
+
+subprocess.call(['gcloud',
+                'storage',
+                'rm',
+                '--recursive',
+                f'gs://{BUCKET_NAME}'
 ], shell=True)
