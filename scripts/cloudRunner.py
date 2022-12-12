@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 
 BUCKET_NAME='accidental-severity-prediction-source-b'
 REGION='europe-west6' # zurigo
@@ -103,11 +104,13 @@ subprocess.call(['gcloud',
                 f'{REGION}'
 ], shell=True)
 
+os.makedirs(f"data/cloud_logs/output_{DIM}")
+
 subprocess.call(['gsutil',
                 'cp',
                 '-r',
-                f'gs://{BUCKET_NAME}/output_{DIM}.txt', 
-                'data/.'
+                f'gs://{BUCKET_NAME}/output_{DIM}', 
+                f'data/cloud_logs/output_{DIM}'
 ], shell=True)
 
 subprocess.call(['gcloud',
