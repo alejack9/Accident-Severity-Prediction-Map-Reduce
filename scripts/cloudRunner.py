@@ -89,7 +89,7 @@ submit_command_args = ['gcloud',
                 f'gs://{BUCKET_NAME}/output_{DIM}/'
                 ]
 
-if (PARTITIONS == ""):
+if (PARTITIONS != ""):
     submit_command_args.append(PARTITIONS)
 
 subprocess.call(submit_command_args, shell=True)
@@ -100,7 +100,8 @@ subprocess.call(['gcloud',
                 'delete',
                 f'{CLUSTER_NAME}',
                 '--region',
-                f'{REGION}'], shell=True)
+                f'{REGION}'
+], shell=True)
 
 subprocess.call(['gsutil',
                 'cp',
