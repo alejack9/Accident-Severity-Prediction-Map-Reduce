@@ -105,7 +105,7 @@ for dim in DIMS:
                     f'data/cloud_logs/output_{dim}'
     ], shell=True)
     
-    subprocess.call(['gutils',
+    subprocess.call(['gutil',
                     '-m',
                     'rm',
                     '-r'
