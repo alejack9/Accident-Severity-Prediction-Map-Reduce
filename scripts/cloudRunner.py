@@ -8,7 +8,7 @@ ZONE='europe-west1-b' # belgium
 CLUSTER_NAME='accidental-severity-prediction-cluster'
 MASTER_MACHINE_TYPE='n1-standard-2'
 WORKER_MACHINE_TYPE='n1-standard-4'
-NUM_WORKERS='3'
+NUM_WORKERS='2'
 
 SP_MODE='spark'
 PARTITIONS=''
@@ -54,8 +54,8 @@ subprocess.call(['gsutil',
                 f'gs://{BUCKET_NAME}/FinalProject-assembly-1.0.0.jar'
 ], shell=True)
 
-DIMS = [1024]
-
+DIMS = [1024, 2048, 4096, 8192]
+# DIMS = [262144]
 for dim in DIMS:
     print(f"-------------- DIM {dim} --------------")
 
@@ -96,24 +96,24 @@ for dim in DIMS:
 
     subprocess.call(submit_command_args, shell=True)
 
-    os.makedirs(f"data/cloud_logs/output_{dim}")
+    os.makedirs(f"data/cloud_logs/output_{dim}_{NUM_WORKERS}_workers")
 
     subprocess.call(['gsutil',
                     'cp',
                     '-r',
                     f'gs://{BUCKET_NAME}/output_{dim}', 
-                    f'data/cloud_logs/output_{dim}'
+                    f'data/cloud_logs/output_{dim}_{NUM_WORKERS}_workers'
     ], shell=True)
     
-    subprocess.call(['gutil',
-                    '-m',
-                    'rm',
-                    '-r'
-                    '-x',
-                    f'gs://{BUCKET_NAME}/FinalProject-assembly-1.0.0.jar',
-                    f'gs://{BUCKET_NAME}/*',
-                    
-    ], shell=True)
+    for path in [
+        f'gs://{BUCKET_NAME}/{input_train_file_name}',
+        f'gs://{BUCKET_NAME}/{input_test_file_name}',
+        f'gs://{BUCKET_NAME}/output_{dim}/']:
+            subprocess.call(['gsutil',
+                            '-m',
+                            'rm',
+                            '-r',
+                            path ], shell=True)
 
 subprocess.call(['gcloud',
                 'dataproc',
