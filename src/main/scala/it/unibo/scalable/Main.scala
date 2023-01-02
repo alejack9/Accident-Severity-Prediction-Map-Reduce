@@ -3,10 +3,10 @@ package it.unibo.scalable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import java.io._
-
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils._
 import it.unibo.scalable.ml.dt.spark._
+import org.apache.spark.storage.StorageLevel
 
 import java.nio.file.Paths
 
@@ -134,9 +134,7 @@ object Main {
 
       val unpartiotionedTrainData = trainRdd
         .mapPartitionsWithIndex{(idx, iter) => if(idx == 0) iter.drop(1) else iter}
-        .map(row => row.split(",").toSeq)
-        .map(_.drop(1))
-        .map(_.map(_.toFloat))
+        .map(row => row.split(",").toSeq.drop(1).map(_.toFloat))
 
       val trainData = if (args.length == 5)
           unpartiotionedTrainData.repartition(args(4).toInt)
@@ -148,13 +146,10 @@ object Main {
 
       val testData = testRdd
         .mapPartitionsWithIndex { (idx, iter) => if (idx == 0) iter.drop(1) else iter }
-        .map(row => row.split(",").toSeq)
-        .map(_.drop(1))
-        .map(_.map(_.toFloat))
+        .map(row => row.split(",").toSeq.drop(1).map(_.toFloat))
 
       val c45 = new C45
       var t1 = System.nanoTime
-
 
       val treeMap = c45.train(trainData)
       val trainTime = System.nanoTime - t1
@@ -179,7 +174,7 @@ object Main {
 
       sc.parallelize(Seq(results)).saveAsTextFile(args(3))
 
-      //System.in.read()
+//      System.in.read()
     }
   }
 }

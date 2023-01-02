@@ -2,6 +2,7 @@ package it.unibo.scalable.ml.dt.spark
 
 import it.unibo.scalable.MathExtension
 import it.unibo.scalable.ml.dt.spark.Types.Dataset
+import org.apache.spark.storage.StorageLevel
 // import org.apache.spark.Partitioner
 import org.apache.spark.rdd.RDD
 
@@ -18,15 +19,16 @@ class C45 {
 
   def train(D: Dataset): Map[List[(Int, Float)], Node] = {
     def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node]): Map[List[(Int, Float)], Node] = {
+      val cached = dataset.persist(StorageLevel.MEMORY_AND_DISK)
       // get the best attribute index with the related gain ratio
-      val bestAttrIndex = getBestAttribute(dataset)
+      val bestAttrIndex = getBestAttribute(cached)
 
       if (bestAttrIndex._2 == 0.0 // If the best chosen gain ratio is 0.0 then there are no more splits that carry info
         || bestAttrIndex._2.isNaN) // NaN means that the subset has 1 sample only
-        return treeTable + (path -> Leaf(getClass(dataset)))
+        return treeTable + (path -> Leaf(getClass(cached)))
 
       // get all the distinct values in the dataset for the best chosen feature
-      val bestAttrValues = dataset.map(_ (bestAttrIndex._1)).distinct.collect
+      val bestAttrValues = cached.map(_ (bestAttrIndex._1)).distinct.collect
 
       // for each possible value, create a subnode and update the tree table
       bestAttrValues
@@ -34,10 +36,10 @@ class C45 {
           val current = (bestAttrIndex._1, value)
 
           if (path.contains(current)) // if this couple (feature, value) already exists in the node path
-            treeTable + ((path :+ current) -> Leaf(getClass(dataset)))
+            treeTable + ((path :+ current) -> Leaf(getClass(cached)))
           else
             _train(
-              dataset.filter(_ (bestAttrIndex._1) == value), // the subset
+              cached.filter(_ (bestAttrIndex._1) == value), // the subset
               path :+ current, // the path of the subset node
               treeTable + (path -> Link(bestAttrIndex._1)) // the tree table updated with the current node as a link
             )
@@ -83,6 +85,7 @@ class C45 {
       .reduceByKey(_ + _)
       .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
 //      .partitionBy(Partitioner.defaultPartitioner() 10)
+      .persist(StorageLevel.MEMORY_AND_DISK)
 
     // 2nd map-reduce step: ATTRIBUTE SELECTION
     // reduce population
@@ -93,6 +96,8 @@ class C45 {
     val mapComputationInput: RDD[((Int, Float), (Float, Long, Long))] = dataPreparationRes
       .join(reducePopulationRes)
       .mapValues { case ((c, cnt), all) => (c, cnt, all) }
+      .persist(StorageLevel.MEMORY_AND_DISK)
+
 
     // calc general entropy of the set D, useful in the calculation of the gain ratio
     val entropy = calcEntropy(mapComputationInput, dsLength)
