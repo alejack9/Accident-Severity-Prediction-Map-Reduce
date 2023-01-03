@@ -83,15 +83,11 @@ class C45() extends C45Alg {
             // [feat value, [samples]]
             val branches = ds.groupBy(sample => sample(attrIndex)).toList.sortBy(_._1).map(_._2)
             (Calc.infoGainRatio(dsEntropy, branches, ds.length), cond, branches, index)
-          }
-          else { // continuous case
+          } else { // continuous case
             val (cond, infoGainRatio, subDss) = bestContinuousSplitPoint(ds, dsEntropy, attrValues, attrIndex)
             (infoGainRatio, cond, subDss, index)
           }
         }
-//
-//      println("============== info gain ratios ")
-//      println(infoGainRatios.map(t => (t._4, t._1)).sortBy(_._2).mkString(","))
 
       if (infoGainRatios.forall(_._1 == 0.0f)) return Success(LeafFactory.get(ds))
 
