@@ -33,7 +33,7 @@ class C45Test extends AnyFunSuite {
   val dtc = new C45
 
   test("get best attribute") {
-    dtc.getBestAttribute(D)
+    dtc.getBestAttribute(D, D.first.indices)
     assert(1 == 1)
   }
 
