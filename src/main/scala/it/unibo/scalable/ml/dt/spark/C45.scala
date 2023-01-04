@@ -23,7 +23,7 @@ class C45 {
 
       val cached = dataset.persist(StorageLevel.MEMORY_AND_DISK)
 
-      if (features.length == 0)
+      if (features.isEmpty)
         return treeTable + (path -> Leaf(getClass(cached)))
 
       // get the best attribute index with the related gain ratio
@@ -85,13 +85,14 @@ class C45 {
     val dataPreparationRes: RDD[((Int, Float), (Float, Long))] = D
       // Map attribute step
 //      .zipWithIndex // attach the row id
-      .flatMap (row =>
-        row.init.indices.map(i => ((i, row(i), row.last), 1L)) )
+      .flatMap(row =>
+        row.init.indices.filter(i => features.contains(i)).map(i => ((i, row(i), row.last), 1L))
+      )
       // Reduce attribute step
 //      .map { case ((j, aj), c) => ((j, aj, c), 1L) }
+//      .filter {case ((j, _, _), _) => features.contains(j) }
       .reduceByKey(_ + _)
       .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
-      .filter {case ((j, _), _) => features.contains(j) }
 //      .partitionBy(Partitioner.defaultPartitioner() 10)
       .persist(StorageLevel.MEMORY_AND_DISK)
 
