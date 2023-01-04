@@ -19,15 +19,12 @@ class C45 {
 
   def train(D: Dataset): Map[List[(Int, Float)], Node] = {
 
-    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node], features: Seq[Int] ): Map[List[(Int, Float)], Node] = {
+    def _train(dataset: Dataset, path: List[(Int, Float)], treeTable: Map[List[(Int, Float)], Node]): Map[List[(Int, Float)], Node] = {
 
       val cached = dataset.persist(StorageLevel.MEMORY_AND_DISK)
 
-      if (features.isEmpty)
-        return treeTable + (path -> Leaf(getClass(cached)))
-
       // get the best attribute index with the related gain ratio
-      val bestAttrIndex = getBestAttribute(cached, features)
+      val bestAttrIndex = getBestAttribute(cached)
 
       if (bestAttrIndex._2 == 0.0 // If the best chosen gain ratio is 0.0 then there are no more splits that carry info
         || bestAttrIndex._2.isNaN) // NaN means that the subset has 1 sample only
@@ -47,14 +44,13 @@ class C45 {
             _train(
               cached.filter(_ (bestAttrIndex._1) == value), // the subset
               path :+ current, // the path of the subset node
-              treeTable + (path -> Link(bestAttrIndex._1)), // the tree table updated with the current node as a link
-              features.patch(bestAttrIndex._1, Nil, 1),
+              treeTable + (path -> Link(bestAttrIndex._1)) // the tree table updated with the current node as a link
             )
         })
         .reduce(_ ++ _)
     }
 
-    _train(D, List.empty, HashMap.empty, D.first.indices)
+    _train(D, List.empty, HashMap.empty)
   }
 
   // Entropy(D) = - sum(p(D, c) * log2(p(D,c)) for each class c
@@ -68,32 +64,25 @@ class C45 {
       .filter { case ((j, _), _) => j == firstJ }
       .map { case ((_, _), (c, cnt, _)) => (c, cnt) }
       .reduceByKey(_ + _)
-      .map(v => {
-        val p = v._2 / dsLength.toFloat
-        p * MathExtension.log2(p)
-      }).sum.toFloat
+      .aggregate(0f)({ case (acc, (_, v)) =>
+        val p = v / dsLength.toFloat
+        acc + p * MathExtension.log2(p)
+      }, _ + _)
   }
 
   // take the class with most occurrences
   def getClass(D: Dataset): Float = D.map(_.last).countByValue().maxBy(_._2)._1
 
-  def getBestAttribute(D: Dataset, features: Seq[Int]): (Int, Double) = {
+  def getBestAttribute(D: Dataset): (Int, Double) = {
     val dsLength = D.count()
 
     // 1st map-reduce step: DATA PREPARATION
     // out ((j, a_j), (class, count))
     val dataPreparationRes: RDD[((Int, Float), (Float, Long))] = D
-      // Map attribute step
-//      .zipWithIndex // attach the row id
       .flatMap(row =>
-        row.init.indices.filter(i => features.contains(i)).map(i => ((i, row(i), row.last), 1L))
-      )
-      // Reduce attribute step
-//      .map { case ((j, aj), c) => ((j, aj, c), 1L) }
-//      .filter {case ((j, _, _), _) => features.contains(j) }
+        row.init.indices.map(i => ((i, row(i), row.last), 1L)))
       .reduceByKey(_ + _)
       .map { case ((j, aj, c), cnt) => ((j, aj), (c, cnt)) }
-//      .partitionBy(Partitioner.defaultPartitioner() 10)
       .persist(StorageLevel.MEMORY_AND_DISK)
 
     // 2nd map-reduce step: ATTRIBUTE SELECTION
