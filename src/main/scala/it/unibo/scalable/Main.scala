@@ -132,15 +132,9 @@ object Main {
       val sc = ContextFactory.getContext(LogLevel.OFF)
       val trainRdd = sc.textFile(trainDSPath)
 
-      val unpartiotionedTrainData = trainRdd
+      val trainData = trainRdd
         .mapPartitionsWithIndex{(idx, iter) => if(idx == 0) iter.drop(1) else iter}
         .map(row => row.split(",").toSeq.drop(1).map(_.toFloat))
-
-      val trainData = if (args.length == 5)
-          unpartiotionedTrainData.repartition(args(4).toInt)
-        else
-          unpartiotionedTrainData
-
 
       val testRdd = sc.textFile(testDSPath)
 
@@ -153,8 +147,6 @@ object Main {
 
       val treeMap = c45.train(trainData)
       val trainTime = System.nanoTime - t1
-
-      // println(treeMap.mkString("\r\n"))
 
       t1 = System.nanoTime
       val predictedYs = Evaluator.predict(treeMap, testData)
@@ -172,7 +164,7 @@ object Main {
 
       println(results)
 
-      sc.parallelize(Seq(results)).saveAsTextFile(args(3))
+     sc.parallelize(Seq(results)).saveAsTextFile(args(3))
 
 //      System.in.read()
     }
