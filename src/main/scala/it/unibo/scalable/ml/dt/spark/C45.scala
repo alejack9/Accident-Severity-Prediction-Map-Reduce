@@ -57,20 +57,31 @@ class C45 {
   }
 
   // Entropy(D) = - sum(p(D, c) * log2(p(D,c)) for each class c
-  def calcEntropy(in: RDD[((Int, Float), ((Float, Long), Long))], dsLength: Broadcast[Long]): Float = {
+//  def calcEntropy(in: RDD[((Int, Float), ((Float, Long), Long))], dsLength: Broadcast[Long]): Float = {
+//
+//    val firstJ = in.first._1._1
+//
+//    // in questo pezzo di codice facciamo la somma (il reduce) per ogni chiave ma ci basterebbe prendere le chiavi che hanno la stessa J e lavorare solo su quei record
+//    //                         j ,  a_j       c     cnt   all
+//    -in
+//      .filter { case ((j, _), _) => j == firstJ }
+//      .map { case ((_, _), ((c, cnt), _)) => (c, cnt) }
+//      .reduceByKey(_ + _)
+//      .aggregate(0f)({ case (acc, (_, v)) =>
+//        val p = v / dsLength.value.toFloat
+//        acc + p * MathExtension.log2(p)
+//      }, _ + _)
+//  }
 
-    val firstJ = in.first._1._1
+  def calcEntropy(in: Dataset, dsLength: Broadcast[Long]): Float = {
+    // Count the number of occurrences of each class
+    val classCounts = in.map(_.last).countByValue()
 
-    // in questo pezzo di codice facciamo la somma (il reduce) per ogni chiave ma ci basterebbe prendere le chiavi che hanno la stessa J e lavorare solo su quei record
-    //                         j ,  a_j       c     cnt   all
-    - in
-      .filter { case ((j, _), _) => j == firstJ }
-      .map { case ((_, _), ((c, cnt), _)) => (c, cnt) }
-      .reduceByKey(_ + _)
-      .aggregate(0f)({ case (acc, (_, v)) =>
-        val p = v / dsLength.value.toFloat
-        acc + p * MathExtension.log2(p)
-      }, _ + _)
+    // Compute the entropy
+    classCounts.values.map { count =>
+      val p = count.toFloat / dsLength.value
+      -p * MathExtension.log2(p)
+    }.sum
   }
 
   // take the class with most occurrences
@@ -98,13 +109,13 @@ class C45 {
       .persist(StorageLevel.MEMORY_AND_DISK)
 
     // calc general entropy of the set D, useful in the calculation of the gain ratio
-    val entropy = sc.broadcast(calcEntropy(computationInput, dsLength))
+//    val entropy = sc.broadcast(calcEntropy(computationInput, dsLength))
+    val entropy = sc.broadcast(calcEntropy(D, dsLength))
 
     val computation = computationInput
       .mapValues({ case ((_, cnt), all) =>
         val p = cnt / all.toFloat
-        val v = -p * MathExtension.log2(p)
-        val entropyjAjC = v // partial entropy for j aj dataset and class c
+        val entropyjAjC = -p * MathExtension.log2(p) // partial entropy for j aj dataset and class c
 
         val infojAj = all / dsLength.value.toFloat
 
