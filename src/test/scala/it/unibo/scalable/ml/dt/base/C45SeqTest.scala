@@ -95,5 +95,3 @@ class C45SeqTest extends AnyFunSuite {
     assert(t.toString.equals("CondNode(cond:(feat 2 [ 3.0 , 5.0 , 7.0 , 11.0 ]),children:[Leaf(2.0), Leaf(0.0), Leaf(0.0), Leaf(2.0)])"))
   }
 }
-
-

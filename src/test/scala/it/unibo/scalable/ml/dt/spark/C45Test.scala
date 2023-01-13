@@ -6,8 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class C45Test extends AnyFunSuite {
   val n_threads = "*"
   val conf: SparkConf = new SparkConf().setAppName("Accident-Severity-Prediction").setMaster("local[" + n_threads + "]").set("spark.driver.maxResultSize", "0")
-  val sc = ContextFactory.getContext(LogLevel.OFF)
-//  val D: Types.Dataset = sc.parallelize(List(Array(1,1,10),Array(10,1,1),Array(8,1,13),Array(2,1,1),Array(5,1,1),Array(5,1,1),Array(1,1,2))).map(_.map(_.toFloat).toSeq)
+  val sc: SparkContext = ContextFactory.getContext(LogLevel.OFF)
   val D: Types.Dataset = sc.parallelize(List(
     Seq(3, 3, 5, 0),
     Seq(1, 1, 7, 0),
@@ -33,13 +32,11 @@ class C45Test extends AnyFunSuite {
   val dtc = new C45
 
   test("get best attribute") {
-    dtc.getBestAttribute(D, D.first.indices)
-    assert(1 == 1)
+    dtc.getBestAttribute(D, sc.broadcast(D.first.indices))
   }
 
   test("train") {
     println(dtc.train(D).mkString("\r\n"))
-    assert(1 == 1)
   }
 
   test("train  10 times") {
@@ -49,18 +46,15 @@ class C45Test extends AnyFunSuite {
       println(dtc.train(D).mkString("\r\n"))
       println(f"__________________{$i}_____________________")
     }
-    assert(1 == 1)
   }
 
   test("score") {
     println(Evaluator.score(D, Evaluator.predict(dtc.train(D), D)))
-    assert(1 == 1)
   }
 
   test("toYaml") {
     val treeTable = dtc.train(D)
     println(treeTable.mkString("\r\n"))
     println(Evaluator.toYaml(treeTable))
-    assert(1 == 1)
   }
 }

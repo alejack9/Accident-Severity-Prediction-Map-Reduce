@@ -19,7 +19,7 @@ class TreeTest extends AnyFunSuite {
     )).asInstanceOf[Tree[Float]]
 
     assert(t.predict(testD) == List[Float](0, 2, 2, 2, 2))
-    assert(t.score(testD) == 0.8)
+    assert(t.score(testD) == 0.8f)
   }
 
   test("a_0 | categorical") {
@@ -28,7 +28,7 @@ class TreeTest extends AnyFunSuite {
     )).asInstanceOf[Tree[Float]]
 
     assert(t.predict(testD) == List[Float](0, 2, 2, 2, 2))
-    assert(t.score(testD) == 0.8)
+    assert(t.score(testD) == 0.8f)
   }
 
   test("a0 a1 | continuous") {

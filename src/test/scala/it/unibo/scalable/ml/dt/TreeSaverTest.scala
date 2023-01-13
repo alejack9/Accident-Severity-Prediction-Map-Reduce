@@ -21,6 +21,6 @@ class TreeSaverTest extends AnyFunSuite {
     val pw = new PrintWriter(fileMockup)
 
     TreeSaver.save(t, pw)
-    assert(fileMockup.toString.equals("0 - feat 1 < 6.0 | 1 - feat 1 < 2.5 | 2 - feat 0 List(1.0, 7.0) | 3 - feat 1 < 1.5 | 4 - 0.0 | 4 - 2.0 | 3 - 2.0 | 2 - 0.0 | 1 - 2.0 | "))
+    assertResult("index: 1\r\nchildren:\r\n- val: \"< 6.0\"\r\n  index: 1\r\n  children:\r\n  - val: \"< 2.5\"\r\n    index: 0\r\n    children:\r\n    - val: 1.0\r\n      index: 1\r\n      children:\r\n      - val: \"< 1.5\"\r\n        leaf: 0.0\r\n      - val: \">= 1.5\"\r\n        leaf: 2.0\r\n    - val: 7.0\r\n      leaf: 2.0\r\n  - val: \">= 2.5\"\r\n    leaf: 0.0\r\n- val: \">= 6.0\"\r\n  leaf: 2.0")(fileMockup.toString)
   }
 }

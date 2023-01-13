@@ -6,10 +6,8 @@ import java.io._
 import it.unibo.scalable.ml.dt._
 import it.unibo.scalable.ml.dt.Utils._
 import it.unibo.scalable.ml.dt.spark._
-import org.apache.spark.storage.StorageLevel
 
 import java.nio.file.Paths
-
 
 object Main {
   def main(args : Array[String]): Unit = {
@@ -17,7 +15,6 @@ object Main {
     // arg 1: test path
     // arg 2: mode
     // arg 3: out path
-    // arg 4: partitions
 
     if (args.length == 0) {
       println("Training ds not provided")
@@ -50,8 +47,6 @@ object Main {
     val testDSPath = args(1)
 
     if(args(2) != "spark") {
-      // test the alg with 1% -> 42876 samples , 5% -> 214380 samples and 10% -> 428759 samples of the original dataset,
-      // val testSizeRates = Array(1, 5, 10)
 
       val trainSrc = Source.fromFile(trainDSPath)
       val testSrc = Source.fromFile(testDSPath)
@@ -65,18 +60,16 @@ object Main {
       for (line <- testSrc.getLines.drop(1))
         testData += line.split(',').tail.map(_.trim.toFloat).toSeq
 
-      // read mode changed because it got overhead error
-      //val x: Iterator[Seq[Float]] = trainSrc.getLines.drop(1).map(r => r.split(',').map(_.trim).tail.map(_.toFloat))
-//      val featFormats = List(
-//        Format.Continuous, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
-//        Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Categorical,
-//        Format.Continuous, Format.Categorical, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Categorical,
-//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-//        Format.Continuous, Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
-//        Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
-//        Format.Categorical)
+      //      val featFormats = List(
+      //        Format.Continuous, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
+      //        Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Categorical,
+      //        Format.Continuous, Format.Categorical, Format.Continuous, Format.Categorical, Format.Continuous, Format.Continuous, Format.Categorical,
+      //        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+      //        Format.Continuous, Format.Continuous, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+      //        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+      //        Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
+      //        Format.Categorical, Format.Categorical, Format.Categorical, Format.Continuous, Format.Continuous, Format.Continuous, Format.Continuous,
+      //        Format.Categorical)
 
       val featFormats = List(
         Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical, Format.Categorical,
@@ -96,7 +89,7 @@ object Main {
 
       println("Computation mode: " + args(2))
 
-      val c45: C45Alg = new base.C45
+      val c45 = new base.C45
 
       var t1 = System.nanoTime
       val tree = c45.train(input, featFormats) //.show
@@ -164,9 +157,9 @@ object Main {
 
       println(results)
 
-     sc.parallelize(Seq(results)).saveAsTextFile(args(3))
+      sc.parallelize(Seq(results)).saveAsTextFile(args(3))
 
-//      System.in.read()
+      System.in.read()
     }
   }
 }

@@ -8,7 +8,7 @@ import it.unibo.scalable.ml.dt._
 import scala.collection.GenSeq
 import scala.util.{Failure, Success, Try}
 
-class C45() extends C45Alg {
+class C45() {
 
   private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: GenSeq[Float], attrIndex: Int)
   : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
@@ -28,7 +28,7 @@ class C45() extends C45Alg {
   }
 
   // the last value of each sample represents the class target
-  override def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
+  def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
 
     def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[Float]] = try {
       if (attributes.isEmpty
@@ -45,7 +45,7 @@ class C45() extends C45Alg {
           return Success(CondNode(
             CategoricalCondition(attrIndex, attrValues),
             attrValues.map(v => {
-              _train(ds.filter(row => row(attrIndex) == v), attributes, depth + 1) match {
+              _train(ds.filter(row => row(attrIndex) == v), attributes.patch(0, Nil, 1), depth + 1) match {
                 case Success(value) => value
                 case Failure(_) =>
                   // Stack overflow error, leaf created instead
