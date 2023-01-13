@@ -50,8 +50,8 @@ subprocess.call(['gcloud',
 
 subprocess.call(['gsutil', 
                 'cp', 
-                'target/scala-2.12/FinalProject-assembly-1.0.0.jar', 
-                f'gs://{BUCKET_NAME}/FinalProject-assembly-1.0.0.jar'
+                'target/scala-2.12/AccidentSeverityPrediction-assembly-1.0.0.jar', 
+                f'gs://{BUCKET_NAME}/AccidentSeverityPrediction-assembly-1.0.0.jar'
 ], shell=True)
 
 DIMS = [1024, 2048, 4096, 8192]
@@ -83,7 +83,7 @@ for dim in DIMS:
                     'spark',
                     f'--cluster={CLUSTER_NAME}',
                     f'--region={REGION}',
-                    f'--jar=gs://{BUCKET_NAME}/FinalProject-assembly-1.0.0.jar',
+                    f'--jar=gs://{BUCKET_NAME}/AccidentSeverityPrediction-assembly-1.0.0.jar',
                     '--',
                     f'gs://{BUCKET_NAME}/{input_train_file_name}',
                     f'gs://{BUCKET_NAME}/{input_test_file_name}',

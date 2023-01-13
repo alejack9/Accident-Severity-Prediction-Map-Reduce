@@ -1,5 +1,4 @@
 ThisBuild / version := "1.0.0"
-// ThisBuild / version := "0.1.0-PAR"
 
 ThisBuild / scalaVersion := "2.12.15"
 
@@ -12,18 +11,13 @@ ThisBuild / assemblyMergeStrategy := {
 libraryDependencies += "org.apache.spark" %% "spark-core" % "3.1.2"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.2.1"
 libraryDependencies += "org.apache.spark" %% "spark-mllib" % "3.2.1"
-//libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % Test
-
-//javacOptions ++= Seq("-source", "8", "-target", "8")
 
 scalacOptions += "-target:jvm-1.8"
 
-
 lazy val root = (project in file("."))
   .settings(
-    name := "FinalProject"
-//    , idePackagePrefix := Some("it.unibo.scalable")
+    name := "AccidentSeverityPrediction"
   )
 
 initialize := {
