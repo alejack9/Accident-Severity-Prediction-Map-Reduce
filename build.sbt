@@ -1,19 +1,23 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "1.0.0"
 
 ThisBuild / scalaVersion := "2.12.15"
 
+ThisBuild / assemblyMergeStrategy := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
+
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
 libraryDependencies += "org.apache.spark" %% "spark-core" % "3.1.2"
-
-//javacOptions ++= Seq("-source", "8", "-target", "8")
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.2.1"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "3.2.1"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % Test
 
 scalacOptions += "-target:jvm-1.8"
 
-
 lazy val root = (project in file("."))
   .settings(
-    name := "FinalProject"
-//    , idePackagePrefix := Some("it.unibo.scalable")
+    name := "AccidentSeverityPrediction"
   )
 
 initialize := {
