@@ -106,7 +106,6 @@ class C45 {
 
     val computationInput = count_table
       .join(population)
-      .persist(StorageLevel.MEMORY_AND_DISK)
 
     // calc general entropy of the set D, useful in the calculation of the gain ratio
 //    val entropy = sc.broadcast(calcEntropy(computationInput, dsLength))
