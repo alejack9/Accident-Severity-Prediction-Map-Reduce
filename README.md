@@ -10,24 +10,22 @@ The project aims to implement a decision tree algorithm to predict accident seve
 # Abstract
 In this project, we propose an implementation of C4.5 following the MapReduce framework for distributed computing. Our objective is to extend to decision trees the benefits given by this framework, such as the efficient processing of large datasets, fault tolerance, and parallelism that could greatly improve the overall performance of the algorithm.
 We also implement a classic version of the algorithm and carried out tests in sequential and parallel modes.
-Different size of datasets and clusters were being used to test the algorithms.\
-We used Google Cloud Platform (GCP) which allowed us to test the distribuited version of the C4.5 decision tree.
+Different datasets and cluster sizes were used to test the algorithms.
+We used Google Cloud Platform (GCP) which allowed us to test the distributed version of the C4.5 decision tree.
 
 ## Project build
-
-To build the project to execute in local environment you have to install sbt-assembly plugin and use the following sbt commands:
+To build the project to be executable in local environment, we used sbt-assembly plugin with the sbt commands below. Note that IntelliJ automatically install the plugin while loading the project.
 ```
 sbt clean
 sbt assembly
 ```
-While to run the project on cloud using Dataproc you have to use different command as the service already provides the necessary dependencies:
+To run the project on the cloud using Dataproc, we simply use the built-in package commands since the service provides the required dependencies.
 ```
 sbt clean
 sbt package
 ```
 
 ## Instruction for running project on local environment
-
 You can run the project .jar in the following way:
 ```
 java -Xmx10G -jar $PATH $TRAIN_INPUT $TEST_INPUT $MODE
