@@ -5,7 +5,7 @@ gsutil mb -l europe-west1 gs://accidental-severity-prediction-source-j
 
 ## move jar in bucket
 ```
-gsutil cp .\target\scala-2.12\finalproject_2.12-1.0.0.jar gs://accidental-severity-prediction-source-j/FinalProject-assembly-1.0.0.jar
+gsutil cp .\target\scala-2.12\accidentSeverityPrediction_2.12-1.0.0.jar gs://accidental-severity-prediction-source-j/AccidentSeverityPrediction-assembly-1.0.0.jar
 ```
 
 ## cp input
@@ -24,7 +24,7 @@ Example with dataset of size 262144:
 
 ```
 gcloud "dataproc" "jobs" "submit" "spark" "--async" "--cluster=accidental-severity-prediction-cluster" "--region=europe-west1" 
-"--jar=gs://accidental-severity-prediction-source-j/FinalProject-assembly-1.0.0.jar" "--" "gs://accidental-severity-prediction-source-j/input_train_262144_binned.csv" "gs://accidental-severity-prediction-source-j/input_test_262144_binned.csv" "spark" "gs://accidental-severity-prediction-source-j/output_3_262144/"
+"--jar=gs://accidental-severity-prediction-source-j/AccidentSeverityPrediction-assembly-1.0.0.jar" "--" "gs://accidental-severity-prediction-source-j/input_train_262144_binned.csv" "gs://accidental-severity-prediction-source-j/input_test_262144_binned.csv" "spark" "gs://accidental-severity-prediction-source-j/output_3_262144/"
 ```
 
 ## copy results:

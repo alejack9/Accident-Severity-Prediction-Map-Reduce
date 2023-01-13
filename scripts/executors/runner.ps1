@@ -19,7 +19,7 @@ foreach ($x in $modes)
         $pinfo.RedirectStandardError = $true
         $pinfo.RedirectStandardOutput = $true
         $pinfo.UseShellExecute = $false
-        $pinfo.Arguments = "-Xmx10G -Xss8G -jar .\target\scala-2.12\FinalProject-assembly-1.0.0.jar $train_input $test_input $x $dataPath\results\${num}_${x}_cont.log"
+        $pinfo.Arguments = "-Xmx10G -Xss8G -jar .\target\scala-2.12\AccidentSeverityPrediction-assembly-1.0.0.jar $train_input $test_input $x $dataPath\results\${num}_${x}_cont.log"
 
         $current = Get-Date -Format "HH:mm:ss"
         "${date}_$current - Starting $x in $num..." | Tee-Object -Append "$dataPath\logs\${num}_${x}_cont.log" | Write-Host
