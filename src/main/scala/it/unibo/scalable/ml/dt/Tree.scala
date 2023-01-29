@@ -6,9 +6,18 @@ import scala.annotation.tailrec
 import scala.collection.GenSeq
 
 sealed trait Tree[T] {
+  def toYaml(): String = {
+    def _toYml(nodes: GenSeq[(Int, Tree[T], String)], str: String): String = nodes match {
+      case node :: xs => node match {
+          case (spaces, Leaf(v), valString) => _toYml(xs, str + f"$valString${" " * spaces}leaf: ${v}\r\n")
+          case (spaces, CondNode(cond, children), valString) =>
+            _toYml(cond.getValues.zip(children).map{case (v, child) => (spaces + 2, child, f"${" " * spaces}- val: $v\r\n")} ++ xs, str + f"$valString${" " * spaces}index: ${cond.index}\r\n${" " * spaces}children:\r\n")
+      }
+      case Nil => str
+    }
 
-  def toYaml(): String = toYaml(0)
-  def toYaml(spaces: Int): String
+    _toYml(Seq((0, this, "")), "")
+  }
 
   def predict[C <: Seq[Float]](data: Dataset[C]): GenSeq[T] = {
     def traverse(sample: C): T = {
@@ -38,17 +47,7 @@ sealed trait Tree[T] {
     // right predictions / total sample
     ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
   }
-
-  def show(): Unit = {
-    def _show(tree: Tree[T], depth: Int): Unit = tree match {
-      case Leaf(target) => println(depth + ": " + target)
-      case CondNode(cond, children) =>
-        println(depth + ": " + cond)
-        children.foreach(child => _show(child, depth + 1))
-    }
-    _show(this, 0)
-  }
-
+  
   def ==(tree: Tree[T]): Boolean = tree match {
     case Leaf(target) => this match {
       case CondNode(_, _) => false
@@ -63,10 +62,9 @@ sealed trait Tree[T] {
   }
 }
 
-case class CondNode[C, T](cond: Condition[C], children: GenSeq[Tree[T]]) extends Tree[T] {
+case class CondNode[C, T](private val cond: Condition[C], private val children: GenSeq[Tree[T]]) extends Tree[T] {
   override def toString = f"CondNode(cond:(${cond}),children:[${children.mkString(", ")}])"
 
-  override def toYaml(spaces: Int) = f"${" " * spaces}index: ${cond.index}\r\n${" " * spaces}children:\r\n${cond.getValues.zip(children).map{case (v, child) => f"${" " * spaces}- val: $v\r\n${child.toYaml(spaces + 2)}"}.mkString("\r\n")}"
 }
 
 object LeafFactory {
@@ -75,6 +73,4 @@ object LeafFactory {
 
 case class Leaf[T](target: T) extends Tree[T] {
   override def toString = f"Leaf(${target})"
-
-  override def toYaml(spaces: Int) = f"${" " * spaces}leaf: ${target}"
 }
