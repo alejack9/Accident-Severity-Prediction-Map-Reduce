@@ -57,18 +57,27 @@ sealed trait Tree[T] {
     // right predictions / total sample
     ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
   }
-  
-  def ==(tree: Tree[T]): Boolean = tree match {
-    case Leaf(target) => this match {
-      case CondNode(_, _) => false
-      case Leaf(target1) => target1 == target
+
+  def ==(tree: Tree[T]): Boolean = {
+    @tailrec
+    def _eq(nodes: GenSeq[(Tree[T], Tree[T])]): Boolean = nodes match {
+      case nodeTuple :: xs => nodeTuple._1 match {
+        case Leaf(t) => nodeTuple._2 match {
+          case CondNode(_,_) => false
+          case Leaf(t1) => t1 == t
+        }
+        case CondNode(cond, children) => nodeTuple._2 match {
+          case Leaf(_) => false
+          case CondNode(cond1, children1) => {
+            if (cond != cond1) return false
+            _eq(children.zip(children1).toList ++ xs)
+          }
+        }
+      }
+      case Nil => true
     }
-    case CondNode(cond, children) => this match {
-      case Leaf(_) => false
-      case CondNode(cond1, children1) =>
-        if(cond != cond1) return false
-        children1.zip(children).forall{case (c1, c2) => c1 == c2}
-    }
+
+    _eq(Seq((tree, this)))
   }
 }
 
