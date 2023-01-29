@@ -7,12 +7,22 @@ import scala.collection.GenSeq
 
 sealed trait Tree[T] {
   def toYaml(): String = {
+    // nodes: (num_of_spaces, node, "-val: ..." string)
+    // str: accumulator
+    @tailrec
     def _toYml(nodes: GenSeq[(Int, Tree[T], String)], str: String): String = nodes match {
       case node :: xs => node match {
-          case (spaces, Leaf(v), valString) => _toYml(xs, str + f"$valString${" " * spaces}leaf: ${v}\r\n")
-          case (spaces, CondNode(cond, children), valString) =>
-            _toYml(cond.getValues.zip(children).map{case (v, child) => (spaces + 2, child, f"${" " * spaces}- val: $v\r\n")} ++ xs, str + f"$valString${" " * spaces}index: ${cond.index}\r\n${" " * spaces}children:\r\n")
+        // if it is a leaf, return a string with the "valString" and the leaf value
+        case (spaces, Leaf(v), valString) => _toYml(xs, str + f"$valString${" " * spaces}leaf: ${v}\r\n")
+        // if it is a CondNode, recall _toYml zipping the condition values (categories or continuous boundaries)
+        // with the actual children and map them adding two spaces, the child and the "-val .." piece of string to
+        // the current elaboration list (xs). Also add to the accumulator the value valString and the index of the
+        // attribute in the condition followed by the "- children" header
+        case (spaces, CondNode(cond, children), valString) =>
+          _toYml(cond.getValues.zip(children).map{case (v, child) => (spaces + 2, child, f"${" " * spaces}- val: $v\r\n")} ++ xs,
+            str + f"$valString${" " * spaces}index: ${cond.index}\r\n${" " * spaces}children:\r\n")
       }
+      // if no more nodes => return str
       case Nil => str
     }
 
