@@ -52,9 +52,13 @@ class C45Test extends AnyFunSuite {
     println(Evaluator.score(D, Evaluator.predict(dtc.train(D), D)))
   }
 
-  test("toYaml") {
+  test("toYamlD") {
     val treeTable = dtc.train(D)
-    println(treeTable.mkString("\r\n"))
-    println(Evaluator.toYaml(treeTable))
+    assertResult("index: 2\r\nchildren:\r\n- val: 3.0\r\n  leaf: 2.0\r\n- val: 11.0\r\n  leaf: 2.0\r\n- val: 7.0\r\n  leaf: 0.0\r\n- val: 5.0\r\n  leaf: 0.0\r\n")(Evaluator.toYaml(treeTable))
+  }
+
+  test("toYamlD1") {
+    val treeTable = dtc.train(D1)
+    assertResult("index: 0\r\nchildren:\r\n- val: 1.0\r\n  index: 1\r\n  children:\r\n  - val: 55.0\r\n    leaf: 0.0\r\n  - val: 9.0\r\n    leaf: 1.0\r\n  - val: 1.0\r\n    leaf: 1.0\r\n- val: 245.0\r\n  leaf: 0.0\r\n- val: 2.0\r\n  leaf: 2.0\r\n- val: 90.0\r\n  leaf: 0.0\r\n- val: 0.0\r\n  leaf: 5.0\r\n- val: 8.0\r\n  leaf: 1.0\r\n- val: 53.0\r\n  leaf: 1.0\r\n")(Evaluator.toYaml(treeTable))
   }
 }

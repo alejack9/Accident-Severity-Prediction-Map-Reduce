@@ -4,6 +4,7 @@ import it.unibo.scalable.ml.dt.spark.Types.Dataset
 import org.apache.spark.rdd.RDD
 
 import scala.annotation.tailrec
+import scala.collection.GenSeq
 
 object Evaluator {
   @tailrec
@@ -24,18 +25,19 @@ object Evaluator {
   }
 
   def toYaml(treeTable: Map[List[(Int, Float)], Node]): String = {
-    def _toYaml(treeTable: Map[List[(Int, Float)], Node], nodeID:List[(Int, Float)], level: Int): String = {
-      treeTable.get(nodeID) match {
-        case Some(Link(index)) => f"\r\n${"  " * level}index: $index \r\n${"  " * level}children: " +
-          f"${treeTable.filterKeys(k =>
-            k.length == level + 1
-            || (k.length > level + 1 && k(level+1)._1 == index)
-            && k(level)._1 == index).map {
-            case (k, _) => f"\r\n${"  " * level}- val: ${k(level)._2}${_toYaml(treeTable, k, level + 1)}"}.mkString("")}"
-        case Some(Leaf(target)) => f"\r\n${"  " * level}leaf: $target"
+    @tailrec
+    def _toYml(nodes: GenSeq[(Int, List[(Int, Float)], String)], str: String): String = nodes match {
+      case node :: xs => node match {
+        case (level, k, valString) => treeTable.get(k) match {
+          case Some(Leaf(v)) => _toYml(xs, str + f"$valString${"  " * level}leaf: ${v}\r\n")
+          case Some(Link(index)) =>
+            val newKeys = treeTable.filterKeys(k => k.length == level + 1 || (k.length > level + 1 && k(level + 1)._1 == index) && k(level)._1 == index).keys.toList
+            _toYml(newKeys.map(key => (level + 1, key, f"${"  " * level}- val: ${key(level)._2}\r\n")) ++ xs, str + f"$valString${"  " * level}index: ${index}\r\n${"  " * level}children:\r\n")
+        }
       }
+      case Nil => str
     }
 
-    _toYaml(treeTable, List.empty, 0)
+    _toYml(Seq((0, List.empty, "")), "")
   }
 }
