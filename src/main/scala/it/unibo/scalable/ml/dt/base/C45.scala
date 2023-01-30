@@ -8,18 +8,18 @@ import it.unibo.scalable.ml.dt._
 import scala.collection.GenSeq
 import scala.util.{Failure, Success, Try}
 
-class C45() {
+class C45[C <: AnyVal : Fractional] {
 
-  private def bestContinuousSplitPoint[T <: Seq[Float]](ds: Dataset[T], dsEntropy: Float, attrValues: GenSeq[Float], attrIndex: Int)
-  : (ContinuousCondition[Float], Float, Seq[Dataset[T]]) = {
+  private def bestContinuousSplitPoint[T <: Seq[C]](ds: Dataset[T], dsEntropy: Float, attrValues: GenSeq[C], attrIndex: Int)
+  : (ContinuousCondition[C], Float, Seq[Dataset[T]]) = {
     // https://stackoverflow.com/a/23847107 : best way to sort the array if par -> convert parseq to seq an then back to parseq
     // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
 
     val attrValuesSorted = attrValues.sort()
-    val midPoints = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) => (a + b) / 2.0f }
+    val midPoints : GenSeq[C] = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) => implicitly[Fractional[C]].div(implicitly[Fractional[C]].plus(a, b), 2.0f.asInstanceOf[C]) }
 
     val bestSplitPoint = midPoints.map(midpoint => {
-      val partitions = ds.partition(row => row(attrIndex) < midpoint)
+      val partitions = ds.partition(row => implicitly[Fractional[C]].lt(row(attrIndex), midpoint))
       val partList = List(partitions._1, partitions._2)
       (midpoint, Calc.infoGainRatio(dsEntropy, partList, ds.length), partList)
     }).maxBy(_._2)
@@ -28,9 +28,9 @@ class C45() {
   }
 
   // the last value of each sample represents the class target
-  def train[T <: Seq[Float]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[Float] = {
+  def train[T <: Seq[C]](ds: Dataset[T], attributeTypes: Seq[Format]): Tree[C] = {
 
-    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[Float]] = try {
+    def _train(ds: Dataset[T], attributes: Seq[Attribute], depth: Int): Try[Tree[C]] = try {
       if (attributes.isEmpty
         || ds.forall(_.last == ds.head.last)) return Success(LeafFactory.get(ds))
 
@@ -49,7 +49,7 @@ class C45() {
                 case Success(value) => value
                 case Failure(_) =>
                   // Stack overflow error, leaf created instead
-                  LeafFactory.get(ds)
+                  LeafFactory.get[C, T](ds)
               }
             })
           ))
@@ -64,7 +64,7 @@ class C45() {
             case Success(value) => value
             case Failure(_) =>
               // Stack overflow error, leaf created instead
-              LeafFactory.get(ds)
+              LeafFactory.get[C, T](ds)
           })) )
         }
       }
@@ -72,13 +72,13 @@ class C45() {
       // + 1 attributes are available
       val dsEntropy = Calc.entropy(ds)
 
-      val infoGainRatios: Seq[(Float, Condition[_ <: Float], Seq[Dataset[T]], Int)] = attributes.zipWithIndex
+      val infoGainRatios: Seq[(Float, Condition[_ <: C], Seq[Dataset[T]], Int)] = attributes.zipWithIndex
         .map { case ((format, attrIndex), index) =>
           val attrValues = ds.map(sample => sample(attrIndex)).distinct.sort()
 
           if (attrValues.length == 1) (0.0f, CategoricalCondition(index, Nil), Nil, -1)
           else if (format == Format.Categorical) {
-            def cond: Condition[Float] = CategoricalCondition(attrIndex, attrValues)
+            def cond: Condition[C] = CategoricalCondition(attrIndex, attrValues)
 
             // [feat value, [samples]]
             val branches = ds.groupBy(sample => sample(attrIndex)).toList.sortBy(_._1).map(_._2)
@@ -107,7 +107,7 @@ class C45() {
             case Success(value) => value
             case Failure(_) =>
               // Stack overflow error, leaf created instead
-              LeafFactory.get(ds)
+              LeafFactory.get[C, T](ds)
           })))
     } catch {
       case e: StackOverflowError =>

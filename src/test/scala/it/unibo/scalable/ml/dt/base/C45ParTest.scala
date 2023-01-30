@@ -14,7 +14,7 @@ class C45ParTest extends AnyFunSuite {
     Seq(7, 1, 3, 2)
   ).map(_.map(_.toFloat)).par
 
-  val dtc = new base.C45
+  val dtc = new base.C45[Float]
 
 //  private def printDs(): Unit = {
 //    println("________Dataset_______")

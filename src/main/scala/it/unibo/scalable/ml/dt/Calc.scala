@@ -5,7 +5,7 @@ import it.unibo.scalable.ml.dt.Utils.Types.Dataset
 
 object Calc {
 
-  def entropy[T <: Seq[Float]](ds: Dataset[T]): Float = {
+  def entropy[T <: AnyVal](ds: Dataset[Seq[T]]): Float = {
     val targets = ds.map(_.last).distinct
 
     // - sommatoria per ogni classe p(classe) * log (p)
@@ -15,15 +15,15 @@ object Calc {
     }).sum.toFloat
   }
 
-  def information[T <: Seq[Float]](subSets: Seq[Dataset[T]], dsLength: Long): Float =
+  def information[T <: AnyVal](subSets: Seq[Dataset[Seq[T]]], dsLength: Long): Float =
   //    we could call information calculating probabilities but we had to run map twice and seq != RDD
     subSets.map(subset => subset.length / dsLength.toFloat * entropy(subset)).sum
 
-  def information[T <: Seq[Float]](subProbabilities: Seq[Float], subSets: Seq[Dataset[T]]): Float =
+  def information[T <: AnyVal](subProbabilities: Seq[Float], subSets: Seq[Dataset[Seq[T]]]): Float =
     subProbabilities.zip(subSets).map { case (p, s) => p * entropy(s) }.sum
 
 
-  def splitInformation[T <: Seq[Float]](subsets: Seq[Dataset[T]], dsLength: Long): Float =
+  def splitInformation[T <: AnyVal](subsets: Seq[Dataset[Seq[T]]], dsLength: Long): Float =
   //    same as information
     -subsets.map(subset => {
       val p = subset.length / dsLength.toFloat
@@ -32,7 +32,7 @@ object Calc {
 
   def splitInformation(subProbabilities: Seq[Float]): Float = -subProbabilities.map(p => p * MathExtension.log2(p)).sum.toFloat
 
-  def infoGainRatio[T <: Seq[Float]](dsEntropy: Float, subSets: Seq[Dataset[T]], dsLength: Long): Float = {
+  def infoGainRatio[T <: AnyVal](dsEntropy: Float, subSets: Seq[Dataset[Seq[T]]], dsLength: Long): Float = {
     val subProbs = subSets.map(subset => subset.length / dsLength.toFloat)
 
     val infoGain = dsEntropy - information(subProbs, subSets)

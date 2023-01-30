@@ -10,7 +10,7 @@ object Utils {
   }
 
   object Types {
-    type Dataset[SAMPLE_TYPE <: Seq[Float]] = GenSeq[SAMPLE_TYPE]
+    type Dataset[+SAMPLE_TYPE <: Seq[AnyVal]] = GenSeq[SAMPLE_TYPE]
     type Attribute = (Format.Format, Int)
   }
 

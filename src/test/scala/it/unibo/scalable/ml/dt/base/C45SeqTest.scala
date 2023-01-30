@@ -13,7 +13,7 @@ class C45SeqTest extends AnyFunSuite {
     Seq(1, 9, 11, 2),
     Seq(7, 1, 3, 2)
   ).map(_.map(_.toFloat))
-  val dtc = new C45
+  val dtc = new C45[Float]
 
 //  private def printDs(): Unit = {
 //        println("________Dataset_______")

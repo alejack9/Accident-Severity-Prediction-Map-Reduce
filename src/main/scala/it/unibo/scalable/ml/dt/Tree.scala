@@ -5,7 +5,7 @@ import it.unibo.scalable.ml.dt.Utils.Types.Dataset
 import scala.annotation.tailrec
 import scala.collection.GenSeq
 
-sealed trait Tree[T] {
+sealed trait Tree[-T <: AnyVal] {
   def toYaml(): String = {
     // nodes: (num_of_spaces, node, "-val: ..." string)
     // str: accumulator
@@ -29,15 +29,15 @@ sealed trait Tree[T] {
     _toYml(Seq((0, this, "")), "")
   }
 
-  def predict[C <: Seq[Float]](data: Dataset[C]): GenSeq[T] = {
-    def traverse(sample: C): T = {
+  def predict[C <: T](data: Dataset[Seq[C]]): GenSeq[C] = {
+    def traverse(sample: Seq[C]): C = {
       @tailrec
-      def _traverse(tree: Tree[T]): T = {
+      def _traverse(tree: Tree[C]): C = {
         tree match {
-          case Leaf(target) => target
+          case Leaf(target) => target.asInstanceOf[C]
           case CondNode(cond, children) =>
             val next = cond(sample)
-            if(next == -1) return (-1.0f).asInstanceOf[T]
+            if(next == -1) return (-1.0f).asInstanceOf[C]
             _traverse(children(cond(sample)))
         }
       }
@@ -48,19 +48,19 @@ sealed trait Tree[T] {
     data.map(traverse)
   }
 
-  def score[C <: Seq[Float]](ds: Dataset[C]): Float = {
+  def score(ds: Dataset[Seq[T]]): Float = {
     val predictedYs = predict(ds.map(_.init))
     score(ds, predictedYs)
   }
 
-  def score[C <: Seq[Float]](ds: Dataset[C], ys: GenSeq[T]): Float = {
+  def score(ds: Dataset[Seq[T]], ys: GenSeq[T]): Float = {
     // right predictions / total sample
     ds.zip(ys).count { case (row, predicted) => row.last == predicted }.toFloat / ds.length
   }
 
-  def ==(tree: Tree[T]): Boolean = {
+  def ==[C <: T](tree: Tree[C]): Boolean = {
     @tailrec
-    def _eq(nodes: GenSeq[(Tree[T], Tree[T])]): Boolean = nodes match {
+    def _eq(nodes: GenSeq[(Tree[C], Tree[C])]): Boolean = nodes match {
       case nodeTuple :: xs => nodeTuple._1 match {
         case Leaf(t) => nodeTuple._2 match {
           case CondNode(_,_) => false
@@ -81,15 +81,15 @@ sealed trait Tree[T] {
   }
 }
 
-case class CondNode[C, T](private val cond: Condition[C], private val children: GenSeq[Tree[T]]) extends Tree[T] {
+case class CondNode[C <: AnyVal, T <: AnyVal](private val cond: Condition[C], private val children: GenSeq[Tree[T]]) extends Tree[T] {
   override def toString = f"CondNode(cond:(${cond}),children:[${children.mkString(", ")}])"
 
 }
 
 object LeafFactory {
-  def get[T <: Seq[Float]](ds: Dataset[T]): Leaf[Float] = Leaf(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1)
+  def get[C <: AnyVal, T <: Seq[C]](ds: Dataset[T]): Leaf[C] = Leaf(ds.map(row => (row.last, 1)).groupBy(_._1).map{case (a, b) => (a, b.length)}.maxBy(_._2)._1)
 }
 
-case class Leaf[T](target: T) extends Tree[T] {
+case class Leaf[T <: AnyVal](target: T) extends Tree[T] {
   override def toString = f"Leaf(${target})"
 }

@@ -89,7 +89,7 @@ object Main {
 
       println("Computation mode: " + args(2))
 
-      val c45 = new base.C45
+      val c45 = new base.C45[Float]
 
       var t1 = System.nanoTime
       val tree = c45.train(input, featFormats) //.show
