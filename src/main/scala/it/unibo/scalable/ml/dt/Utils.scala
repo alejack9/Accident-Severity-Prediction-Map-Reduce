@@ -14,12 +14,10 @@ object Utils {
     type Attribute = (Format.Format, Int)
   }
 
-  implicit class GenSeqSort[T : Ordering](s: GenSeq[T]) {
-    def sort(): GenSeq[T] = {
-      s match {
-        case c: Seq[T] => c.sorted
-        case _ => s.seq.sorted.par
-      }
+  implicit class GenSeqSort[+T : Ordering](s: GenSeq[T]) {
+    def sort(): GenSeq[T] = s match {
+      case c: Seq[T] => c.sorted
+      case _ => s.seq.sorted.par
     }
   }
 }

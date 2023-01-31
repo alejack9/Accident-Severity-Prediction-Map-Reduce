@@ -16,7 +16,8 @@ class C45[C <: AnyVal : Fractional] {
     // [1,2,3,4] -> [1,2,3] [2,3,4] -> [(1,2), (2,3), (3,4)] => [1.5, 2.5, 3.5]
 
     val attrValuesSorted = attrValues.sort()
-    val midPoints : GenSeq[C] = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) => implicitly[Fractional[C]].div(implicitly[Fractional[C]].plus(a, b), 2.0f.asInstanceOf[C]) }
+    val midPoints : GenSeq[C] = attrValuesSorted.init.zip(attrValuesSorted.tail).map { case (a, b) =>
+      implicitly[Fractional[C]].div(implicitly[Fractional[C]].plus(a, b), implicitly[Fractional[C]].fromInt(2)) }
 
     val bestSplitPoint = midPoints.map(midpoint => {
       val partitions = ds.partition(row => implicitly[Fractional[C]].lt(row(attrIndex), midpoint))

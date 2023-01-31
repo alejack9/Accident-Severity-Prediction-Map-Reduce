@@ -12,7 +12,7 @@ object Calc {
     -targets.map(target => {
       val p = ds.count(_.last == target) / ds.length.toFloat
       p * MathExtension.log2(p)
-    }).sum.toFloat
+    }).sum
   }
 
   def information[T <: AnyVal](subSets: Seq[Dataset[Seq[T]]], dsLength: Long): Float =
@@ -28,9 +28,9 @@ object Calc {
     -subsets.map(subset => {
       val p = subset.length / dsLength.toFloat
       p * MathExtension.log2(p)
-    }).sum.toFloat
+    }).sum
 
-  def splitInformation(subProbabilities: Seq[Float]): Float = -subProbabilities.map(p => p * MathExtension.log2(p)).sum.toFloat
+  def splitInformation(subProbabilities: Seq[Float]): Float = -subProbabilities.map(p => p * MathExtension.log2(p)).sum
 
   def infoGainRatio[T <: AnyVal](dsEntropy: Float, subSets: Seq[Dataset[Seq[T]]], dsLength: Long): Float = {
     val subProbs = subSets.map(subset => subset.length / dsLength.toFloat)
